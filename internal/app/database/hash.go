@@ -31,7 +31,7 @@ func (d *Database) makeShortURL() (shortURL string, err error) {
 	}
 
 	if shortURL == "" {
-		return "", fmt.Errorf("failed to generate a short URL, used %d attempts \n", attemptCount)
+		err = fmt.Errorf("failed to generate a short URL, used %d attempts \n", attemptCount)
 	}
 
 	return shortURL, err
