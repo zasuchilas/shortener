@@ -6,6 +6,7 @@ import (
 	"io"
 	"log"
 	"net/http"
+	"strings"
 )
 
 type Server struct {
@@ -76,7 +77,10 @@ func (s *Server) readURLHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	shortURL := r.PathValue("shortURL")
+	// TODO: shortURL := r.PathValue("shortURL") (NOT WORK IN httptest)
+	shortURL := r.URL.Path
+	shortURL = strings.TrimLeft(shortURL, "/")
+	log.Println("shortURL 1", shortURL)
 
 	origURL, err := s.db.ReadURL(shortURL)
 	if err != nil {

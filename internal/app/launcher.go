@@ -13,7 +13,7 @@ import (
 )
 
 const (
-	addr = "localhost:8080"
+	Addr = "localhost:8080"
 )
 
 type App struct {
@@ -39,9 +39,9 @@ func New() *App {
 func (a *App) Run() {
 	logger.ServiceInfo(a.AppVersion)
 
-	st := storage.New() // TODO: use or not interface Storage here ?
+	st := storage.New()
 
-	srv := server.New(addr, st)
+	srv := server.New(Addr, st)
 	a.waitGroup.Add(1)
 	go srv.Start()
 

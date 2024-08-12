@@ -23,7 +23,7 @@ func (d *Database) makeShortURL() (shortURL string, err error) {
 		shortURL = randStringRunes(shortURLLength)
 
 		// check is already used
-		_, found := d.hash[shortURL]
+		_, found := d.Hash[shortURL]
 		if !found {
 			break
 		}

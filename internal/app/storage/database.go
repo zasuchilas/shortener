@@ -2,17 +2,18 @@ package storage
 
 import (
 	"errors"
+	"log"
 )
 
 type Database struct {
-	urls map[string]string
-	hash map[string]string
+	Urls map[string]string
+	Hash map[string]string
 }
 
 func New() Storage {
 	return &Database{
-		urls: make(map[string]string),
-		hash: make(map[string]string),
+		Urls: make(map[string]string),
+		Hash: make(map[string]string),
 	}
 }
 
@@ -24,7 +25,7 @@ func (d *Database) WriteURL(rawURL string) (shortURL string, err error) {
 	}
 
 	// find in storage
-	v, found := d.urls[u]
+	v, found := d.Urls[u]
 	if found {
 		return v, nil
 	}
@@ -35,16 +36,17 @@ func (d *Database) WriteURL(rawURL string) (shortURL string, err error) {
 	}
 
 	// write to storage
-	d.urls[u] = shortURL
-	d.hash[shortURL] = u
+	d.Urls[u] = shortURL
+	d.Hash[shortURL] = u
 
 	return shortURL, nil
 }
 
 func (d *Database) ReadURL(shortURL string) (origURL string, err error) {
-	origURL, found := d.hash[shortURL]
+	origURL, found := d.Hash[shortURL]
 
 	if !found {
+		log.Println("NOT FOUND", "shortURL", shortURL)
 		return "", errors.New("not found")
 	}
 
