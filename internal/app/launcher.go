@@ -2,9 +2,9 @@ package app
 
 import (
 	"context"
-	"github.com/zasuchilas/shortener/internal/app/database"
 	"github.com/zasuchilas/shortener/internal/app/logger"
 	"github.com/zasuchilas/shortener/internal/app/server"
+	"github.com/zasuchilas/shortener/internal/app/storage"
 	"log"
 	"os"
 	"os/signal"
@@ -39,9 +39,9 @@ func New() *App {
 func (a *App) Run() {
 	logger.ServiceInfo(a.AppVersion)
 
-	db := database.New()
+	st := storage.New() // TODO: use or not interface Storage here ?
 
-	srv := server.New(addr, db)
+	srv := server.New(addr, st)
 	a.waitGroup.Add(1)
 	go srv.Start()
 

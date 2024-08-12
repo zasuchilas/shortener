@@ -2,7 +2,7 @@ package server
 
 import (
 	"fmt"
-	"github.com/zasuchilas/shortener/internal/app/database"
+	"github.com/zasuchilas/shortener/internal/app/storage"
 	"io"
 	"log"
 	"net/http"
@@ -10,10 +10,10 @@ import (
 
 type Server struct {
 	addr string
-	db   *database.Database
+	db   storage.Storage
 }
 
-func New(addr string, db *database.Database) *Server {
+func New(addr string, db storage.Storage) *Server {
 	return &Server{
 		addr: addr,
 		db:   db,

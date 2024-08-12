@@ -1,4 +1,4 @@
-package database
+package storage
 
 import (
 	"errors"
@@ -9,7 +9,7 @@ type Database struct {
 	hash map[string]string
 }
 
-func New() *Database {
+func New() Storage {
 	return &Database{
 		urls: make(map[string]string),
 		hash: make(map[string]string),
@@ -23,7 +23,7 @@ func (d *Database) WriteURL(rawURL string) (shortURL string, err error) {
 		return "", err
 	}
 
-	// find in database
+	// find in storage
 	v, found := d.urls[u]
 	if found {
 		return v, nil
@@ -34,7 +34,7 @@ func (d *Database) WriteURL(rawURL string) (shortURL string, err error) {
 		return "", err
 	}
 
-	// write to database
+	// write to storage
 	d.urls[u] = shortURL
 	d.hash[shortURL] = u
 
