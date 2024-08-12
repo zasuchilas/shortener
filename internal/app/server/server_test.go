@@ -124,6 +124,7 @@ func TestServer_readURLHandler(t *testing.T) {
 			w := httptest.NewRecorder()
 			srv.readURLHandler(w, r)
 			res := w.Result()
+			defer res.Body.Close()
 
 			// checking status code
 			assert.Equal(t, tt.want.statusCode, res.StatusCode)
