@@ -44,7 +44,7 @@ func (d *Database) WriteURL(rawURL string) (shortURL string, err error) {
 func (d *Database) ReadURL(shortURL string) (origURL string, err error) {
 	origURL, found := d.hash[shortURL]
 
-	if found == false {
+	if !found {
 		return "", errors.New("not found")
 	}
 

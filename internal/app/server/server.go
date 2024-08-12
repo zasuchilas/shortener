@@ -25,7 +25,7 @@ func (s *Server) Start() {
 	mux.HandleFunc("/", s.writeURLHandler)
 	mux.HandleFunc("/{shortURL}", s.readURLHandler)
 
-	log.Println(fmt.Sprintf("Server starts at %s", s.addr))
+	log.Printf("Server starts at %s", s.addr)
 	err := http.ListenAndServe(s.addr, mux)
 	if err != nil {
 		panic(any(err))
@@ -59,15 +59,15 @@ func (s *Server) writeURLHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	w.Header().Set("content-type", "text/plain")
+	w.WriteHeader(http.StatusCreated)
+
 	shortURL = fmt.Sprintf("http://%s/%s", s.addr, shortURL)
 	_, err = w.Write([]byte(shortURL))
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-
-	w.Header().Set("content-type", "text/plain")
-	w.WriteHeader(http.StatusCreated)
 }
 
 func (s *Server) readURLHandler(w http.ResponseWriter, r *http.Request) {

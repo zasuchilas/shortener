@@ -1,7 +1,6 @@
 package database
 
 import (
-	"errors"
 	"fmt"
 	"math/rand"
 )
@@ -25,17 +24,14 @@ func (d *Database) makeShortURL() (shortURL string, err error) {
 
 		// check is already used
 		_, found := d.hash[shortURL]
-		if found == false {
-
+		if !found {
 			break
 		}
 		shortURL = ""
-		fmt.Println("attempt", i)
 	}
 
 	if shortURL == "" {
-		return "", errors.New(
-			fmt.Sprintf("failed to generate a short URL, used %d attempts \n", attemptCount))
+		return "", fmt.Errorf("failed to generate a short URL, used %d attempts \n", attemptCount)
 	}
 
 	return shortURL, err
