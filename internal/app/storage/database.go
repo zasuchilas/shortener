@@ -2,7 +2,6 @@ package storage
 
 import (
 	"errors"
-	"log"
 )
 
 type Database struct {
@@ -46,7 +45,6 @@ func (d *Database) ReadURL(shortURL string) (origURL string, err error) {
 	origURL, found := d.Hash[shortURL]
 
 	if !found {
-		log.Println("NOT FOUND", "shortURL", shortURL)
 		return "", errors.New("not found")
 	}
 
