@@ -22,16 +22,16 @@ func (d *Database) cleanURL(raw string) (string, error) {
 
 	// checking the validity of the received url
 	// basic conditions
-	u, err := url.Parse(raw)
+	_, err := url.Parse(raw)
 	if err != nil {
 		return raw, err
 	}
 
 	// checking scheme
 	// http2://спорт.рф/ (mailto, ws/wss, tcp, mqtt ...)
-	if u.Scheme != "http" && u.Scheme != "https" {
-		return raw, errors.New("wrong raw URL (unexpected scheme)")
-	}
+	//if u.Scheme != "http" && u.Scheme != "https" {
+	//	return raw, errors.New("wrong raw URL (unexpected scheme)")
+	//}
 
 	// checking host
 	// https://спорт/
