@@ -11,20 +11,22 @@ import (
 )
 
 type Server struct {
-	addr string
-	db   storage.Storage
+	runAddr string
+	outAddr string
+	db      storage.Storage
 }
 
-func New(addr string, db storage.Storage) *Server {
+func New(runAddr, outAddr string, db storage.Storage) *Server {
 	return &Server{
-		addr: addr,
-		db:   db,
+		runAddr: runAddr,
+		outAddr: outAddr,
+		db:      db,
 	}
 }
 
 func (s *Server) Start() {
-	log.Printf("Server starts at %s", s.addr)
-	log.Fatal(http.ListenAndServe(s.addr, s.Router()))
+	log.Printf("Server starts at %s", s.runAddr)
+	log.Fatal(http.ListenAndServe(s.runAddr, s.Router()))
 }
 
 func (s *Server) Router() chi.Router {
@@ -70,7 +72,7 @@ func (s *Server) writeURLHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("content-type", "text/plain")
 	w.WriteHeader(http.StatusCreated)
 
-	shortURL = fmt.Sprintf("http://%s/%s", s.addr, shortURL)
+	shortURL = fmt.Sprintf("http://%s/%s", s.outAddr, shortURL)
 	_, err = w.Write([]byte(shortURL))
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)

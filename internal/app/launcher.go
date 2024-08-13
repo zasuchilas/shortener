@@ -2,6 +2,7 @@ package app
 
 import (
 	"context"
+	"github.com/zasuchilas/shortener/internal/app/config"
 	"github.com/zasuchilas/shortener/internal/app/logger"
 	"github.com/zasuchilas/shortener/internal/app/server"
 	"github.com/zasuchilas/shortener/internal/app/storage"
@@ -10,10 +11,6 @@ import (
 	"os/signal"
 	"sync"
 	"syscall"
-)
-
-const (
-	Addr = "localhost:8080"
 )
 
 type App struct {
@@ -25,6 +22,8 @@ type App struct {
 }
 
 func New() *App {
+	config.ParseFlags()
+
 	ctx := context.Background()
 	waitGroup := &sync.WaitGroup{}
 
@@ -41,7 +40,7 @@ func (a *App) Run() {
 
 	st := storage.New()
 
-	srv := server.New(Addr, st)
+	srv := server.New(config.FlagRunAddr, config.FlagOutAddr, st)
 	a.waitGroup.Add(1)
 	go srv.Start()
 
