@@ -36,9 +36,9 @@ func (d *Database) cleanURL(raw string) (string, error) {
 	// checking host
 	// https://спорт/
 	// port
-	if !hostRegex.MatchString(u.Host) {
-		return raw, errors.New("wrong raw URL (unexpected host)")
-	}
+	//if !hostRegex.MatchString(u.Host) {
+	//	return raw, errors.New("wrong raw URL (unexpected host)")
+	//}
 
 	// checking path
 	// https://спорт.рф/ 1/
