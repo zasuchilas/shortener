@@ -151,7 +151,7 @@ func TestRouter(t *testing.T) {
 	}
 	st.Urls["http://спорт.ru/"] = "abcdefgh"
 	st.Hash["abcdefgh"] = "http://спорт.ru/"
-	srv := New("localhost:8080", "localhost:8080", st)
+	srv := New(st)
 
 	ts := httptest.NewServer(srv.Router())
 	defer ts.Close()

@@ -40,7 +40,7 @@ func (a *App) Run() {
 
 	st := storage.New()
 
-	srv := server.New(config.RunAddr, config.OutAddr, st)
+	srv := server.New(st)
 	a.waitGroup.Add(1)
 	go srv.Start()
 

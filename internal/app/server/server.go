@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
+	"github.com/zasuchilas/shortener/internal/app/config"
 	"github.com/zasuchilas/shortener/internal/app/storage"
 	"io"
 	"log"
@@ -12,22 +13,18 @@ import (
 )
 
 type Server struct {
-	runAddr string
-	outAddr string
-	db      storage.Storage
+	db storage.Storage
 }
 
-func New(runAddr, outAddr string, db storage.Storage) *Server {
+func New(db storage.Storage) *Server {
 	return &Server{
-		runAddr: runAddr,
-		outAddr: outAddr,
-		db:      db,
+		db: db,
 	}
 }
 
 func (s *Server) Start() {
-	log.Printf("Server starts at %s", s.runAddr)
-	log.Fatal(http.ListenAndServe(s.runAddr, s.Router()))
+	log.Printf("Server starts at %s", config.ServerAddress)
+	log.Fatal(http.ListenAndServe(config.ServerAddress, s.Router()))
 }
 
 func (s *Server) Router() chi.Router {
@@ -74,7 +71,7 @@ func (s *Server) writeURLHandler(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusCreated)
 
 	//shortURL = fmt.Sprintf("http://%s/%s", s.outAddr, shortURL)
-	shortURL = fmt.Sprintf("%s/%s", s.outAddr, shortURL)
+	shortURL = fmt.Sprintf("%s/%s", config.BaseURL, shortURL)
 	if !strings.HasPrefix(shortURL, "http") {
 		shortURL = "http://" + shortURL
 	}
