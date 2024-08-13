@@ -198,6 +198,7 @@ func TestRouter(t *testing.T) {
 
 		t.Run(tt.name, func(t *testing.T) {
 			res, resBody := testRequest(t, ts, tt.method, tt.target, strings.NewReader(tt.body))
+			defer res.Body.Close()
 
 			// checking status code
 			assert.Equal(t, tt.want.statusCode, res.StatusCode)
@@ -251,6 +252,7 @@ func TestRouter(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			res, _ := testRequest(t, ts, tt.method, tt.target, nil)
+			defer res.Body.Close()
 
 			// checking status code
 			assert.Equal(t, tt.want.statusCode, res.StatusCode)
