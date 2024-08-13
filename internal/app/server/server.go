@@ -8,6 +8,7 @@ import (
 	"io"
 	"log"
 	"net/http"
+	"strings"
 )
 
 type Server struct {
@@ -74,6 +75,9 @@ func (s *Server) writeURLHandler(w http.ResponseWriter, r *http.Request) {
 
 	//shortURL = fmt.Sprintf("http://%s/%s", s.outAddr, shortURL)
 	shortURL = fmt.Sprintf("%s/%s", s.outAddr, shortURL)
+	if !strings.HasPrefix(shortURL, "http") {
+		shortURL = "http://" + shortURL
+	}
 	_, err = w.Write([]byte(shortURL))
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
