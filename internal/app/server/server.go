@@ -72,7 +72,8 @@ func (s *Server) writeURLHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("content-type", "text/plain")
 	w.WriteHeader(http.StatusCreated)
 
-	shortURL = fmt.Sprintf("http://%s/%s", s.outAddr, shortURL)
+	//shortURL = fmt.Sprintf("http://%s/%s", s.outAddr, shortURL)
+	shortURL = fmt.Sprintf("%s/%s", s.outAddr, shortURL)
 	_, err = w.Write([]byte(shortURL))
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
