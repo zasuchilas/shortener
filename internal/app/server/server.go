@@ -43,16 +43,6 @@ func (s *Server) Router() chi.Router {
 // TODO: func (s *Server) Stop() {}
 
 func (s *Server) writeURLHandler(w http.ResponseWriter, r *http.Request) {
-	if r.URL.Path != "/" {
-		http.Error(w, "unexpected request path", http.StatusBadRequest)
-		return
-	}
-
-	if r.Method != http.MethodPost {
-		w.WriteHeader(http.StatusBadRequest)
-		http.Error(w, "unexpected request method", http.StatusBadRequest)
-		return
-	}
 
 	body, err := io.ReadAll(r.Body)
 	if err != nil {
