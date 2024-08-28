@@ -3,11 +3,11 @@ package server
 import (
 	"fmt"
 	"github.com/go-chi/chi/v5"
-	"github.com/go-chi/chi/v5/middleware"
 	"github.com/zasuchilas/shortener/internal/app/config"
+	"github.com/zasuchilas/shortener/internal/app/logger"
 	"github.com/zasuchilas/shortener/internal/app/storage"
+	"go.uber.org/zap"
 	"io"
-	"log"
 	"net/http"
 	"strings"
 )
@@ -23,15 +23,15 @@ func New(db storage.Storage) *Server {
 }
 
 func (s *Server) Start() {
-	log.Printf("Server starts at %s", config.ServerAddress)
-	log.Fatal(http.ListenAndServe(config.ServerAddress, s.Router()))
+	logger.Log.Info("Server starts", zap.String("addr", config.ServerAddress))
+	logger.Log.Fatal(http.ListenAndServe(config.ServerAddress, s.Router()).Error())
 }
 
 func (s *Server) Router() chi.Router {
 	r := chi.NewRouter()
 
 	// middlewares
-	r.Use(middleware.Logger)
+	r.Use(WithLogging) // r.Use(middleware.Logger)
 
 	// routes
 	r.Post("/", s.writeURLHandler)

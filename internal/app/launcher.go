@@ -6,11 +6,16 @@ import (
 	"github.com/zasuchilas/shortener/internal/app/logger"
 	"github.com/zasuchilas/shortener/internal/app/server"
 	"github.com/zasuchilas/shortener/internal/app/storage"
+	"go.uber.org/zap"
 	"log"
 	"os"
 	"os/signal"
 	"sync"
 	"syscall"
+)
+
+const (
+	logLevel = "info"
 )
 
 type App struct {
@@ -23,7 +28,6 @@ type App struct {
 
 func New() *App {
 	config.ParseFlags()
-
 	ctx := context.Background()
 	waitGroup := &sync.WaitGroup{}
 
@@ -36,6 +40,9 @@ func New() *App {
 }
 
 func (a *App) Run() {
+	if err := logger.Initialize(logLevel); err != nil {
+		log.Fatal(err.Error())
+	}
 	logger.ServiceInfo(a.AppVersion)
 
 	st := storage.New()
@@ -54,14 +61,14 @@ func (a *App) shutdown() {
 
 	go func() {
 		sig := <-sigChan
-		log.Printf("The %s stop signal has been received", sig)
+		logger.Log.Info("The stop signal has been received", zap.String("signal", sig.String()))
 		close(sigChan)
 
 		// TODO: stop app components
 
 		// TODO: stop server
 
-		log.Println("URL shortening service stopped")
+		logger.Log.Info("URL shortening service stopped")
 		a.waitGroup.Done()
 	}()
 
