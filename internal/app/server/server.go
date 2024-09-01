@@ -96,7 +96,7 @@ func (s *Server) shortenHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	logger.Log.Debug("performing the endpoint task")
-	shortURL, err := s.db.WriteURL(req.Url)
+	shortURL, err := s.db.WriteURL(req.URL)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
