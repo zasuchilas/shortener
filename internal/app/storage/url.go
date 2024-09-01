@@ -2,6 +2,8 @@ package storage
 
 import (
 	"errors"
+	"fmt"
+	"github.com/zasuchilas/shortener/internal/app/config"
 	"net/url"
 	"regexp"
 	"strings"
@@ -58,4 +60,12 @@ func (d *Database) cleanURL(raw string) (string, error) {
 
 	// TODO: raw or u.String() ?
 	return raw, nil
+}
+
+func EnrichURL(shortURL string) string {
+	res := fmt.Sprintf("%s/%s", config.BaseURL, shortURL)
+	if !strings.HasPrefix(res, "http") {
+		res = fmt.Sprintf("http://%s", res)
+	}
+	return res
 }

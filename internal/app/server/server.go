@@ -1,15 +1,15 @@
 package server
 
 import (
-	"fmt"
+	"encoding/json"
 	"github.com/go-chi/chi/v5"
 	"github.com/zasuchilas/shortener/internal/app/config"
 	"github.com/zasuchilas/shortener/internal/app/logger"
+	"github.com/zasuchilas/shortener/internal/app/models"
 	"github.com/zasuchilas/shortener/internal/app/storage"
 	"go.uber.org/zap"
 	"io"
 	"net/http"
-	"strings"
 )
 
 type Server struct {
@@ -36,6 +36,7 @@ func (s *Server) Router() chi.Router {
 	// routes
 	r.Post("/", s.writeURLHandler)
 	r.Get("/{shortURL}", s.readURLHandler)
+	r.Post("/api/shorten", s.shortenHandler)
 
 	return r
 }
@@ -56,16 +57,12 @@ func (s *Server) writeURLHandler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
+	resp := storage.EnrichURL(shortURL)
 
-	w.Header().Set("content-type", "text/plain")
+	w.Header().Set("Content-Type", "text/plain")
 	w.WriteHeader(http.StatusCreated)
 
-	//shortURL = fmt.Sprintf("http://%s/%s", s.outAddr, shortURL)
-	shortURL = fmt.Sprintf("%s/%s", config.BaseURL, shortURL)
-	if !strings.HasPrefix(shortURL, "http") {
-		shortURL = "http://" + shortURL
-	}
-	_, err = w.Write([]byte(shortURL))
+	_, err = w.Write([]byte(resp))
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -83,6 +80,42 @@ func (s *Server) readURLHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.Header().Set("Location", origURL)
-	w.Header().Set("content-type", "text/plain")
+	w.Header().Set("Content-Type", "text/plain")
 	w.WriteHeader(http.StatusTemporaryRedirect)
+}
+
+func (s *Server) shortenHandler(w http.ResponseWriter, r *http.Request) {
+
+	logger.Log.Debug("decoding request")
+	var req models.ShortenRequest
+	dec := json.NewDecoder(r.Body)
+	if err := dec.Decode(&req); err != nil {
+		logger.Log.Debug("cannot decode request JSON body", zap.Error(err))
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	logger.Log.Debug("performing the endpoint task")
+	shortURL, err := s.db.WriteURL(req.Url)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	logger.Log.Debug("filling in the response model")
+	resp := models.ShortenResponse{
+		Result: storage.EnrichURL(shortURL),
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusCreated)
+
+	logger.Log.Debug("encoding response")
+	enc := json.NewEncoder(w)
+	if err = enc.Encode(resp); err != nil {
+		logger.Log.Debug("error encoding response", zap.Error(err))
+		// TODO: ? http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	logger.Log.Debug("sending HTTP 201 response")
 }

@@ -7,6 +7,7 @@ import (
 type Database struct {
 	Urls map[string]string
 	Hash map[string]string
+	// TODO: Mutex
 }
 
 func New() Storage {
