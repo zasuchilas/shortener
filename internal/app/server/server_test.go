@@ -1,8 +1,11 @@
 package server
 
 import (
+	"fmt"
+	"github.com/go-resty/resty/v2"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"github.com/zasuchilas/shortener/internal/app/config"
 	"github.com/zasuchilas/shortener/internal/app/storage"
 	"io"
 	"log"
@@ -14,8 +17,8 @@ import (
 )
 
 var (
-	ts *httptest.Server
-	st *storage.Database
+	srv *httptest.Server
+	st  *storage.Database
 )
 
 func TestMain(m *testing.M) {
@@ -34,14 +37,14 @@ func setup() {
 	}
 	refillDatabase()
 
-	srv := New(st)
-	ts = httptest.NewServer(srv.Router())
+	server := New(st)
+	srv = httptest.NewServer(server.Router())
 
 	log.Println("setup completed")
 }
 
 func teardown() {
-	ts.Close()
+	srv.Close()
 	log.Println("teardown completed")
 }
 
@@ -50,12 +53,12 @@ func refillDatabase() {
 	st.Hash["abcdefgh"] = "http://спорт.ru/"
 }
 
-func testRequest(t *testing.T, ts *httptest.Server, method,
+func testRequest(t *testing.T, method,
 	path string, body io.Reader) (*http.Response, string) {
-	req, err := http.NewRequest(method, ts.URL+path, body)
+	req, err := http.NewRequest(method, srv.URL+path, body)
 	require.NoError(t, err)
 
-	client := ts.Client()
+	client := srv.Client()
 	client.CheckRedirect = func(req *http.Request, via []*http.Request) error {
 		return http.ErrUseLastResponse
 	}
@@ -114,7 +117,7 @@ func TestServer_writeURLHandler(t *testing.T) {
 	for _, tt := range tests {
 
 		t.Run(tt.name, func(t *testing.T) {
-			res, resBody := testRequest(t, ts, tt.method, tt.target, strings.NewReader(tt.body))
+			res, resBody := testRequest(t, tt.method, tt.target, strings.NewReader(tt.body))
 			defer res.Body.Close()
 
 			// checking status code
@@ -165,12 +168,11 @@ func TestServer_readURLHandler(t *testing.T) {
 		},
 	}
 
-	st.Urls["http://спорт.ru/"] = "abcdefgh"
-	st.Hash["abcdefgh"] = "http://спорт.ru/"
+	refillDatabase()
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			res, _ := testRequest(t, ts, tt.method, tt.target, nil)
+			res, _ := testRequest(t, tt.method, tt.target, nil)
 			defer res.Body.Close()
 
 			// checking status code
@@ -188,5 +190,78 @@ func TestServer_readURLHandler(t *testing.T) {
 			//	assert.Empty(t, res.Header.Get("Location"))
 			//}
 		})
+	}
+}
+
+func TestServer_shortenHandler(t *testing.T) {
+	const url = "/api/shorten"
+
+	tests := []struct {
+		name                string
+		method              string
+		url                 string
+		body                string
+		expectedCode        int
+		expectedBody        string
+		expectedContentType string
+	}{
+		{
+			name:         "method_get",
+			method:       http.MethodGet,
+			url:          url,
+			expectedCode: http.StatusMethodNotAllowed,
+			expectedBody: "",
+		},
+		{
+			name:         "method_put",
+			method:       http.MethodPut,
+			url:          url,
+			expectedCode: http.StatusMethodNotAllowed,
+			expectedBody: "",
+		},
+		{
+			name:         "method_post_without_body",
+			method:       http.MethodPost,
+			url:          url,
+			body:         "",
+			expectedCode: http.StatusInternalServerError,
+			expectedBody: "",
+		},
+		{
+			name:                "positive #1",
+			method:              http.MethodPost,
+			url:                 url,
+			body:                `{"url": "http://спорт.ru/"}`,
+			expectedCode:        http.StatusCreated,
+			expectedBody:        fmt.Sprintf(`{"result": "http://%s/abcdefgh"}`, config.BaseURL),
+			expectedContentType: "application/json",
+		},
+	}
+
+	for _, tc := range tests {
+		// create request with resty
+		req := resty.New().R()
+		req.Method = tc.method
+		req.URL = srv.URL + tc.url
+		if len(tc.body) > 0 {
+			req.SetHeader("Content-Type", "application/json")
+			req.SetBody(tc.body)
+		}
+
+		// execute request
+		resp, err := req.Send()
+		assert.NoError(t, err, "error making HTTP request")
+
+		// checking status code
+		assert.Equal(t, tc.expectedCode, resp.StatusCode(), "Response code didn't match expected")
+
+		// checking body
+		if tc.expectedBody != "" {
+			assert.JSONEq(t, tc.expectedBody, string(resp.Body()))
+		}
+
+		// checking content-type header
+		assert.Contains(t, resp.Header().Get("Content-Type"), tc.expectedContentType)
+
 	}
 }
