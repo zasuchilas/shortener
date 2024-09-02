@@ -17,8 +17,9 @@ import (
 )
 
 var (
-	srv *httptest.Server
 	st  *storage.Database
+	s   *Server
+	srv *httptest.Server
 )
 
 func TestMain(m *testing.M) {
@@ -37,8 +38,8 @@ func setup() {
 	}
 	refillDatabase()
 
-	server := New(st)
-	srv = httptest.NewServer(server.Router())
+	s = New(st)
+	srv = httptest.NewServer(s.Router())
 
 	log.Println("setup completed")
 }
@@ -264,4 +265,9 @@ func TestServer_shortenHandler(t *testing.T) {
 		assert.Contains(t, resp.Header().Get("Content-Type"), tc.expectedContentType)
 
 	}
+}
+
+func TestGzipCompression(t *testing.T) {
+	// TODO: TestGzipCompression
+	//handler := http.HandlerFunc(GzipMiddleware(s.shortenHandler))
 }

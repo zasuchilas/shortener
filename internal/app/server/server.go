@@ -32,6 +32,7 @@ func (s *Server) Router() chi.Router {
 
 	// middlewares
 	r.Use(WithLogging) // r.Use(middleware.Logger)
+	r.Use(GzipMiddleware)
 
 	// routes
 	r.Post("/", s.writeURLHandler)
