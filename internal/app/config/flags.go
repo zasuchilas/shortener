@@ -6,14 +6,16 @@ import (
 )
 
 var (
-	ServerAddress string
-	BaseURL       string
+	ServerAddress   string
+	BaseURL         string
+	FileStoragePath string
 )
 
 func ParseFlags() {
 	// using flags (and set default values)
 	flag.StringVar(&ServerAddress, "a", "localhost:8080", "address and port to run server")
 	flag.StringVar(&BaseURL, "b", "localhost:8080", "address and port for include in shortURLs")
+	flag.StringVar(&FileStoragePath, "f", "./storage.db", "path to the data storage file")
 	flag.Parse()
 
 	// using env (replace)
@@ -22,6 +24,9 @@ func ParseFlags() {
 	}
 	if envBaseURL := os.Getenv("BASE_URL"); envBaseURL != "" {
 		BaseURL = envBaseURL
+	}
+	if envFileStoragePath := os.Getenv("FILE_STORAGE_PATH"); envFileStoragePath != "" {
+		FileStoragePath = envFileStoragePath
 	}
 }
 
