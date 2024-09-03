@@ -2,12 +2,13 @@ package storage
 
 import (
 	"errors"
+	"sync"
 )
 
 type Database struct {
-	Urls map[string]string
-	Hash map[string]string
-	// TODO: Mutex
+	Urls  map[string]string
+	Hash  map[string]string
+	mutex sync.RWMutex
 }
 
 func New() Storage {
@@ -36,14 +37,18 @@ func (d *Database) WriteURL(rawURL string) (shortURL string, err error) {
 	}
 
 	// write to storage
+	d.mutex.Lock()
 	d.Urls[u] = shortURL
 	d.Hash[shortURL] = u
+	d.mutex.Unlock()
 
 	return shortURL, nil
 }
 
 func (d *Database) ReadURL(shortURL string) (origURL string, err error) {
+	d.mutex.RLock()
 	origURL, found := d.Hash[shortURL]
+	d.mutex.RUnlock()
 
 	if !found {
 		return "", errors.New("not found")

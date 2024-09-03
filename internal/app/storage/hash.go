@@ -23,7 +23,9 @@ func (d *Database) makeShortURL() (shortURL string, err error) {
 		shortURL = randStringRunes(shortURLLength)
 
 		// check is already used
+		d.mutex.RLock()
 		_, found := d.Hash[shortURL]
+		d.mutex.RUnlock()
 		if !found {
 			break
 		}
