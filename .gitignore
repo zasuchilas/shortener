@@ -23,3 +23,6 @@ vendor/
 .vscode
 
 storage.db
+.pginit
+.pgdata
+docker-compose.yml

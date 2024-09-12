@@ -24,6 +24,7 @@ type App struct {
 	ctx        context.Context
 	waitGroup  *sync.WaitGroup
 	server     server.Server
+	store      *storage.Database
 }
 
 func New() *App {
@@ -45,9 +46,9 @@ func (a *App) Run() {
 	}
 	logger.ServiceInfo(a.AppVersion)
 
-	st := storage.New()
+	a.store = storage.New()
 
-	srv := server.New(st)
+	srv := server.New(a.store)
 	a.waitGroup.Add(1)
 	go srv.Start()
 
@@ -67,6 +68,7 @@ func (a *App) shutdown() {
 		// TODO: stop app components
 
 		// TODO: stop server
+		a.store.Stop()
 
 		logger.Log.Info("URL shortening service stopped")
 		a.waitGroup.Done()

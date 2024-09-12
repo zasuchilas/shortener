@@ -1,6 +1,7 @@
 package storage
 
 import (
+	"database/sql"
 	"errors"
 	"github.com/zasuchilas/shortener/internal/app/config"
 	"github.com/zasuchilas/shortener/internal/app/logger"
@@ -9,18 +10,43 @@ import (
 )
 
 type Database struct {
-	Urls  map[string]string
-	Hash  map[string]string
+	// RAM storage on maps
+	Urls map[string]string
+	Hash map[string]string
+
+	// file storage (add here)
+	// TODO: add file storage (move from method)
+
+	// sql storage
+	SqlDB *sql.DB
+
 	mutex sync.RWMutex
 }
 
-func New() Storage {
+func New() *Database {
 	db := &Database{
 		Urls: make(map[string]string),
 		Hash: make(map[string]string),
 	}
 	restoreFromFile(db, config.FileStoragePath)
+
+	db.SqlDB = NewPostgres()
+
 	return db
+}
+
+func (d *Database) Self() *Database {
+	return d
+}
+
+func (d *Database) Stop() {
+	// file
+	// ...
+
+	// sql
+	if d.SqlDB != nil {
+		d.SqlDB.Close()
+	}
 }
 
 func restoreFromFile(db *Database, filename string) {

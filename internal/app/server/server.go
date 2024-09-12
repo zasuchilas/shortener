@@ -1,6 +1,7 @@
 package server
 
 import (
+	"context"
 	"encoding/json"
 	"github.com/go-chi/chi/v5"
 	"github.com/zasuchilas/shortener/internal/app/config"
@@ -10,15 +11,16 @@ import (
 	"go.uber.org/zap"
 	"io"
 	"net/http"
+	"time"
 )
 
 type Server struct {
-	db storage.Storage
+	store storage.Storage
 }
 
 func New(db storage.Storage) *Server {
 	return &Server{
-		db: db,
+		store: db,
 	}
 }
 
@@ -38,11 +40,12 @@ func (s *Server) Router() chi.Router {
 	r.Post("/", s.writeURLHandler)
 	r.Get("/{shortURL}", s.readURLHandler)
 	r.Post("/api/shorten", s.shortenHandler)
+	r.Get("/ping", s.ping)
 
 	return r
 }
 
-// TODO: func (s *Server) Stop() {}
+func (s *Server) Stop() {}
 
 func (s *Server) writeURLHandler(w http.ResponseWriter, r *http.Request) {
 
@@ -53,7 +56,7 @@ func (s *Server) writeURLHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	rawURL := string(body)
-	shortURL, err := s.db.WriteURL(rawURL)
+	shortURL, err := s.store.WriteURL(rawURL)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
@@ -74,7 +77,7 @@ func (s *Server) readURLHandler(w http.ResponseWriter, r *http.Request) {
 
 	shortURL := chi.URLParam(r, "shortURL")
 
-	origURL, err := s.db.ReadURL(shortURL)
+	origURL, err := s.store.ReadURL(shortURL)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
@@ -97,7 +100,7 @@ func (s *Server) shortenHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	logger.Log.Debug("performing the endpoint task")
-	shortURL, err := s.db.WriteURL(req.URL)
+	shortURL, err := s.store.WriteURL(req.URL)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
@@ -119,4 +122,16 @@ func (s *Server) shortenHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	logger.Log.Debug("sending HTTP 201 response")
+}
+
+func (s *Server) ping(w http.ResponseWriter, r *http.Request) {
+	ctx, cancel := context.WithTimeout(r.Context(), time.Second) // ? context.Background()
+	defer cancel()
+
+	if err := s.store.Self().SqlDB.PingContext(ctx); err != nil { // TODO: delete Self()
+		logger.Log.Debug("postgresql is unavailable", zap.Error(err))
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+	w.WriteHeader(http.StatusOK)
 }
