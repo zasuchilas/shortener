@@ -128,7 +128,7 @@ func (s *Server) ping(w http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithTimeout(r.Context(), time.Second) // ? context.Background()
 	defer cancel()
 
-	if err := s.store.Self().SqlDB.PingContext(ctx); err != nil { // TODO: delete Self()
+	if err := s.store.Self().SQLDB.PingContext(ctx); err != nil { // TODO: delete Self()
 		logger.Log.Debug("postgresql is unavailable", zap.Error(err))
 		w.WriteHeader(http.StatusInternalServerError)
 		return

@@ -18,7 +18,7 @@ type Database struct {
 	// TODO: add file storage (move from method)
 
 	// sql storage
-	SqlDB *sql.DB
+	SQLDB *sql.DB
 
 	mutex sync.RWMutex
 }
@@ -30,7 +30,7 @@ func New() *Database {
 	}
 	restoreFromFile(db, config.FileStoragePath)
 
-	db.SqlDB = NewPostgres()
+	db.SQLDB = NewPostgres()
 
 	return db
 }
@@ -44,8 +44,8 @@ func (d *Database) Stop() {
 	// ...
 
 	// sql
-	if d.SqlDB != nil {
-		d.SqlDB.Close()
+	if d.SQLDB != nil {
+		d.SQLDB.Close()
 	}
 }
 
