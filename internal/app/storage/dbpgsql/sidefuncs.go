@@ -32,7 +32,7 @@ func findByOrig(ctx context.Context, db *sql.DB, origURL string) (urlRow *models
 	var v models.URLRow
 	err = db.QueryRowContext(ctx,
 		`SELECT uuid, short, original FROM urls WHERE original = $1`,
-		origURL).Scan(&v.Uuid, &v.ShortURL, &v.OrigURL)
+		origURL).Scan(&v.UUID, &v.ShortURL, &v.OrigURL)
 	switch {
 	case err == sql.ErrNoRows:
 		return nil, false, nil
@@ -47,7 +47,7 @@ func findByShort(ctx context.Context, db *sql.DB, shortURL string) (urlRow *mode
 	var v models.URLRow
 	err = db.QueryRowContext(ctx,
 		"SELECT uuid, short, original FROM urls WHERE short = $1",
-		shortURL).Scan(&v.Uuid, &v.ShortURL, &v.OrigURL)
+		shortURL).Scan(&v.UUID, &v.ShortURL, &v.OrigURL)
 	switch {
 	case err == sql.ErrNoRows:
 		return nil, false, nil

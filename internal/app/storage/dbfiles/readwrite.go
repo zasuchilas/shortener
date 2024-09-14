@@ -28,7 +28,7 @@ func newFileWriter(filename string) (*fileWriter, error) {
 
 func (p *fileWriter) writeURLRow(uuid int64, shortURL, origURL string) error {
 	row := models.URLRow{
-		Uuid:     uuid,
+		UUID:     uuid,
 		ShortURL: shortURL,
 		OrigURL:  origURL,
 	}

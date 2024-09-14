@@ -56,7 +56,7 @@ func (d *DBFiles) lookup(uuid *int64, origURL, shortURL *string) (urlRow *models
 		}
 
 		cc := 0
-		if uuid != nil && row.Uuid == *uuid {
+		if uuid != nil && row.UUID == *uuid {
 			cc++
 		}
 		if origURL != nil && row.OrigURL == *origURL {
