@@ -1,6 +1,7 @@
 package logger
 
 import (
+	"github.com/zasuchilas/shortener/internal/app/config"
 	"go.uber.org/zap"
 	"runtime/debug"
 )
@@ -49,5 +50,15 @@ func ServiceInfo(appVersion string) {
 		"SHORTENER (URL shortening service)",
 		zap.String("name", moduleName),
 		zap.String("version", appVersion),
+	)
+}
+
+// ConfigInfo logs config values
+func ConfigInfo() {
+	Log.Info("Current app config",
+		zap.String("ServerAddress", config.ServerAddress),
+		zap.String("BaseURL", config.BaseURL),
+		zap.String("FileStoragePath", config.FileStoragePath),
+		zap.String("DatabaseDSN", config.DatabaseDSN),
 	)
 }

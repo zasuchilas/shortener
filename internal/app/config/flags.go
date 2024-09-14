@@ -16,8 +16,8 @@ func ParseFlags() {
 	// using flags (and set default values)
 	flag.StringVar(&ServerAddress, "a", "localhost:8080", "address and port to run server")
 	flag.StringVar(&BaseURL, "b", "localhost:8080", "address and port for include in shortURLs")
-	flag.StringVar(&FileStoragePath, "f", "./storage.db", "path to the data storage file")
-	flag.StringVar(&DatabaseDSN, "d", "host=127.0.0.1 user=shortener password=pass dbname=shortener sslmode=disable", "database connection string")
+	flag.StringVar(&FileStoragePath, "f", "", "path to the data storage file")
+	flag.StringVar(&DatabaseDSN, "d", "", "database connection string")
 	flag.Parse()
 
 	// using env (replace)

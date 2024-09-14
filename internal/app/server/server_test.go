@@ -6,7 +6,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/zasuchilas/shortener/internal/app/config"
-	"github.com/zasuchilas/shortener/internal/app/storage"
+	"github.com/zasuchilas/shortener/internal/app/storage/dbmaps"
 	"io"
 	"log"
 	"net/http"
@@ -17,7 +17,7 @@ import (
 )
 
 var (
-	st  *storage.Database
+	st  *dbmaps.DBMaps
 	s   *Server
 	srv *httptest.Server
 )
@@ -32,10 +32,7 @@ func TestMain(m *testing.M) {
 func setup() {
 	log.Println("setup started")
 
-	st = &storage.Database{
-		Urls: make(map[string]string),
-		Hash: make(map[string]string),
-	}
+	st = dbmaps.New()
 	refillDatabase()
 
 	s = New(st)
@@ -50,8 +47,7 @@ func teardown() {
 }
 
 func refillDatabase() {
-	st.Urls["http://спорт.ru/"] = "abcdefgh"
-	st.Hash["abcdefgh"] = "http://спорт.ru/"
+	dbmaps.Write(st, "abcdefgh", "http://спорт.ru/")
 }
 
 func testRequest(t *testing.T, method,

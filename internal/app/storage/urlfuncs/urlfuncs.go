@@ -1,4 +1,4 @@
-package storage
+package urlfuncs
 
 import (
 	"errors"
@@ -15,7 +15,7 @@ var (
 	// TODO: ru.спорт..1abc.рф ru.спорт.-1abc.рф
 )
 
-func (d *Database) cleanURL(raw string) (string, error) {
+func CleanURL(raw string) (string, error) {
 	// the request body may contain spaces, unlike the query string
 	raw = strings.TrimSpace(raw)
 	if len(raw) == 0 {

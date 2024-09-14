@@ -8,6 +8,7 @@ import (
 	"github.com/zasuchilas/shortener/internal/app/logger"
 	"github.com/zasuchilas/shortener/internal/app/models"
 	"github.com/zasuchilas/shortener/internal/app/storage"
+	"github.com/zasuchilas/shortener/internal/app/storage/urlfuncs"
 	"go.uber.org/zap"
 	"io"
 	"net/http"
@@ -18,9 +19,9 @@ type Server struct {
 	store storage.Storage
 }
 
-func New(db storage.Storage) *Server {
+func New(s storage.Storage) *Server {
 	return &Server{
-		store: db,
+		store: s,
 	}
 }
 
@@ -56,12 +57,19 @@ func (s *Server) writeURLHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	rawURL := string(body)
-	shortURL, err := s.store.WriteURL(rawURL)
+
+	origURL, err := urlfuncs.CleanURL(rawURL)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
-	resp := storage.EnrichURL(shortURL)
+
+	shortURL, _, err := s.store.WriteURL(r.Context(), origURL)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+	resp := urlfuncs.EnrichURL(shortURL)
 
 	w.Header().Set("Content-Type", "text/plain")
 	w.WriteHeader(http.StatusCreated)
@@ -77,7 +85,7 @@ func (s *Server) readURLHandler(w http.ResponseWriter, r *http.Request) {
 
 	shortURL := chi.URLParam(r, "shortURL")
 
-	origURL, err := s.store.ReadURL(shortURL)
+	origURL, err := s.store.ReadURL(r.Context(), shortURL)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
@@ -100,7 +108,7 @@ func (s *Server) shortenHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	logger.Log.Debug("performing the endpoint task")
-	shortURL, err := s.store.WriteURL(req.URL)
+	shortURL, _, err := s.store.WriteURL(r.Context(), req.URL)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
@@ -108,7 +116,7 @@ func (s *Server) shortenHandler(w http.ResponseWriter, r *http.Request) {
 
 	logger.Log.Debug("filling in the response model")
 	resp := models.ShortenResponse{
-		Result: storage.EnrichURL(shortURL),
+		Result: urlfuncs.EnrichURL(shortURL),
 	}
 
 	w.Header().Set("Content-Type", "application/json")
@@ -125,10 +133,10 @@ func (s *Server) shortenHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Server) ping(w http.ResponseWriter, r *http.Request) {
-	ctx, cancel := context.WithTimeout(r.Context(), time.Second) // ? context.Background()
+	ctx, cancel := context.WithTimeout(r.Context(), time.Second)
 	defer cancel()
 
-	if err := s.store.Self().SQLDB.PingContext(ctx); err != nil { // TODO: delete Self()
+	if err := s.store.Ping(ctx); err != nil {
 		logger.Log.Debug("postgresql is unavailable", zap.Error(err))
 		w.WriteHeader(http.StatusInternalServerError)
 		return

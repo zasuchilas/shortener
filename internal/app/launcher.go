@@ -6,6 +6,9 @@ import (
 	"github.com/zasuchilas/shortener/internal/app/logger"
 	"github.com/zasuchilas/shortener/internal/app/server"
 	"github.com/zasuchilas/shortener/internal/app/storage"
+	"github.com/zasuchilas/shortener/internal/app/storage/dbfiles"
+	"github.com/zasuchilas/shortener/internal/app/storage/dbmaps"
+	"github.com/zasuchilas/shortener/internal/app/storage/dbpgsql"
 	"go.uber.org/zap"
 	"log"
 	"os"
@@ -23,12 +26,13 @@ type App struct {
 	AppVersion string
 	ctx        context.Context
 	waitGroup  *sync.WaitGroup
-	server     server.Server
-	store      *storage.Database
+	srv        *server.Server
+	store      storage.Storage
 }
 
 func New() *App {
 	config.ParseFlags()
+
 	ctx := context.Background()
 	waitGroup := &sync.WaitGroup{}
 
@@ -45,12 +49,19 @@ func (a *App) Run() {
 		log.Fatal(err.Error())
 	}
 	logger.ServiceInfo(a.AppVersion)
+	logger.ConfigInfo()
 
-	a.store = storage.New()
+	if config.DatabaseDSN != "" {
+		a.store = dbpgsql.New()
+	} else if config.FileStoragePath != "" {
+		a.store = dbfiles.New()
+	} else {
+		a.store = dbmaps.New()
+	}
 
-	srv := server.New(a.store)
+	a.srv = server.New(a.store)
 	a.waitGroup.Add(1)
-	go srv.Start()
+	go a.srv.Start()
 
 	a.shutdown()
 	a.waitGroup.Wait()

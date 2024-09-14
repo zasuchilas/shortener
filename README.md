@@ -13,3 +13,14 @@ go build -o shortener
 ```
 
 
+| flag | ENV               | usage                                     | default        | example                                                                      |
+| ---- | ----------------- | ----------------------------------------- | -------------- | ---------------------------------------------------------------------------- |
+| -a   | SERVER_ADDRESS    | address and port to run server            | localhost:8080 |                                                                              |
+| -b   | BASE_URL          | address and port for include in shortURLs | localhost:8080 |                                                                              |
+| -f   | FILE_STORAGE_PATH | path to the data storage file             | -              | ./storage.db                                                                 |
+| -d   | DATABASE_DSN      | database connection string                | -              | host=127.0.0.1 user=shortener password=pass dbname=shortener sslmode=disable |
+
+`go run ./cmd/shortener -d "host=127.0.0.1 user=shortener password=pass dbname=shortener sslmode=disable"`
+
+`go run ./cmd/shortener -f ./storage.db`
+
