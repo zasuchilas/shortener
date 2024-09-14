@@ -6,6 +6,7 @@ import (
 	"github.com/zasuchilas/shortener/internal/app/logger"
 	. "github.com/zasuchilas/shortener/internal/app/models"
 	"go.uber.org/zap"
+	"io"
 	"time"
 )
 
@@ -18,83 +19,6 @@ func (d *DBFiles) isExist(shortURL string) (bool, error) {
 	}
 	return found, nil
 }
-
-//func (d *DBFiles) isExist(shortURL string) (bool, error) {
-//	res := false
-//	d.mutex.RLock()
-//	defer d.mutex.RUnlock()
-//
-//	r, err := newFileReader(config.FileStoragePath)
-//	if err != nil {
-//		return false, err
-//	}
-//	defer r.close()
-//
-//	for {
-//		row, e := r.readURLRow()
-//		if e != nil {
-//			logger.Log.Debug("reading url from file", zap.Error(err))
-//			break
-//		}
-//		if row.ShortURL == shortURL {
-//			res = true
-//			break
-//		}
-//	}
-//	return res, nil
-//}
-
-//func (d *DBFiles) findOrig(origURL string) (shortURL string, ok bool, err error) {
-//	d.mutex.RLock()
-//	defer d.mutex.RUnlock()
-//
-//	r, err := newFileReader(config.FileStoragePath)
-//	if err != nil {
-//		return "", false, err
-//	}
-//	defer r.close()
-//
-//	for {
-//		row, e := r.readURLRow()
-//		if e != nil {
-//			logger.Log.Debug("reading url from file", zap.Error(err))
-//			err = e
-//			break
-//		}
-//		if row.OrigURL == origURL {
-//			shortURL = row.ShortURL
-//			ok = true
-//			break
-//		}
-//	}
-//	return shortURL, ok, err
-//}
-
-//func (d *DBFiles) findShort(shortURL string) (origURL string, ok bool, err error) {
-//	d.mutex.RLock()
-//	defer d.mutex.RUnlock()
-//
-//	r, err := newFileReader(config.FileStoragePath)
-//	if err != nil {
-//		return "", false, err
-//	}
-//	defer r.close()
-//
-//	for {
-//		row, e := r.readURLRow()
-//		if e != nil {
-//			logger.Log.Debug("reading url from file", zap.Error(err))
-//			err = e
-//			break
-//		}
-//		if row.ShortURL == shortURL {
-//			origURL = row.OrigURL
-//			ok = true
-//			break
-//		}
-//	}
-//	return origURL, ok, err
-//}
 
 func (d *DBFiles) lookup(uuid *int64, origURL, shortURL *string) (urlRow *URLRow, ok bool, err error) {
 	condCount := 0
@@ -122,6 +46,9 @@ func (d *DBFiles) lookup(uuid *int64, origURL, shortURL *string) (urlRow *URLRow
 
 	for {
 		row, e := r.readURLRow()
+		if e == io.EOF {
+			break
+		}
 		if e != nil {
 			logger.Log.Debug("reading url from file", zap.Error(err))
 			err = e

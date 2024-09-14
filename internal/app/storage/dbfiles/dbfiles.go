@@ -27,8 +27,11 @@ func (d *DBFiles) WriteURL(_ context.Context, origURL string) (shortURL string, 
 	logger.Log.Debug("find in file storage", zap.String("origURL", origURL))
 	//v, found, err := d.findOrig(origURL)
 	v, found, err := d.lookup(nil, &origURL, nil)
-	if found || err != nil {
-		return v.ShortURL, found, err
+	if err != nil {
+		return "", false, err
+	}
+	if found {
+		return v.ShortURL, true, nil
 	}
 
 	logger.Log.Debug("making short url", zap.String("origURL", origURL))

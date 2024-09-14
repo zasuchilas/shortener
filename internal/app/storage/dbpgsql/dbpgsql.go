@@ -38,7 +38,7 @@ func (d *DBPgsql) Stop() {
 func (d *DBPgsql) WriteURL(ctx context.Context, origURL string) (shortURL string, was bool, err error) {
 
 	logger.Log.Debug("find in postgresql storage", zap.String("origURL", origURL))
-	v, found, err := findOrig(ctx, d.db, origURL)
+	v, found, err := findByOrig(ctx, d.db, origURL)
 	if err != nil {
 		logger.Log.Error("finding original url in postgresql storage", zap.Error(err), zap.String("origURL", origURL))
 		return "", false, err
@@ -65,7 +65,7 @@ func (d *DBPgsql) WriteURL(ctx context.Context, origURL string) (shortURL string
 }
 
 func (d *DBPgsql) ReadURL(ctx context.Context, shortURL string) (origURL string, err error) {
-	v, found, err := findShort(ctx, d.db, shortURL)
+	v, found, err := findByShort(ctx, d.db, shortURL)
 	if err != nil {
 		return "", err
 	}

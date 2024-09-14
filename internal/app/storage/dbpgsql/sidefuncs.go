@@ -13,7 +13,7 @@ func createTablesIfNeed(db *sql.DB) {
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
 
-	q := `create table if not exists urls (
+	q := `CREATE TABLE IF NOT EXISTS urls (
 					uuid serial primary key,
 					short varchar(254) not null,
 					original varchar(254) not null
@@ -22,44 +22,46 @@ func createTablesIfNeed(db *sql.DB) {
 	// TODO: use scheme
 	// TODO: INDEX idx_urls_short & INDEX idx_urls_original
 
-	_, err := db.ExecContext(ctx, q, nil)
+	_, err := db.ExecContext(ctx, q)
 	if err != nil {
 		logger.Log.Fatal("creating postgresql tables", zap.Error(err))
 	}
 }
 
-func findOrig(ctx context.Context, db *sql.DB, origURL string) (urlRow *URLRow, ok bool, err error) {
+func findByOrig(ctx context.Context, db *sql.DB, origURL string) (urlRow *URLRow, ok bool, err error) {
+	var v URLRow
 	err = db.QueryRowContext(ctx,
-		"SELECT uuid, original, short FROM urls WHERE original = ?",
-		origURL).Scan(urlRow.Uuid, urlRow.ShortURL, urlRow.OrigURL)
+		`SELECT uuid, short, original FROM urls WHERE original = $1`,
+		origURL).Scan(&v.Uuid, &v.ShortURL, &v.OrigURL)
 	switch {
 	case err == sql.ErrNoRows:
 		return nil, false, nil
 	case err != nil:
 		return nil, false, err
 	default:
-		return urlRow, true, nil
+		return &v, true, nil
 	}
 }
 
-func findShort(ctx context.Context, db *sql.DB, shortURL string) (urlRow *URLRow, ok bool, err error) {
+func findByShort(ctx context.Context, db *sql.DB, shortURL string) (urlRow *URLRow, ok bool, err error) {
+	var v URLRow
 	err = db.QueryRowContext(ctx,
-		"SELECT uuid, original, short FROM urls WHERE short = ?",
-		shortURL).Scan(urlRow.Uuid, urlRow.ShortURL, urlRow.OrigURL)
+		"SELECT uuid, short, original FROM urls WHERE short = $1",
+		shortURL).Scan(&v.Uuid, &v.ShortURL, &v.OrigURL)
 	switch {
 	case err == sql.ErrNoRows:
 		return nil, false, nil
 	case err != nil:
 		return nil, false, err
 	default:
-		return urlRow, true, nil
+		return &v, true, nil
 	}
 }
 
 func (d *DBPgsql) isExist(shortURL string) (bool, error) {
 	var uuid int64
 	err := d.db.QueryRowContext(context.Background(),
-		"SELECT uuid FROM urls WHERE short = ?",
+		"SELECT uuid FROM urls WHERE short = $1",
 		shortURL).Scan(&uuid)
 	switch {
 	case err == sql.ErrNoRows:
@@ -72,16 +74,17 @@ func (d *DBPgsql) isExist(shortURL string) (bool, error) {
 }
 
 func writeRow(ctx context.Context, db *sql.DB, shortURL, origURL string) error {
-	result, err := db.ExecContext(ctx,
-		"INSERT INTO urls (short, original) VALUES (?, ?)",
+	_, err := db.ExecContext(ctx,
+		"INSERT INTO urls (short, original) VALUES ($1, $2)",
 		shortURL, origURL)
 	if err != nil {
 		return err
 	}
-	uuid, err := result.LastInsertId()
-	if err != nil {
-		return err
-	}
-	logger.Log.Debug("row inserted into postgresql", zap.Int64("uuid", uuid))
+	//uuid, err := result.LastInsertId() // TODO: LastInsertId is not supported by this driver
+	//if err != nil {
+	//	return err
+	//}
+	//logger.Log.Debug("row inserted into postgresql", zap.Int64("uuid", uuid))
+	logger.Log.Debug("row inserted into postgresql")
 	return nil
 }
