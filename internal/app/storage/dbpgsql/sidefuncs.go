@@ -4,7 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"github.com/zasuchilas/shortener/internal/app/logger"
-	. "github.com/zasuchilas/shortener/internal/app/models"
+	"github.com/zasuchilas/shortener/internal/app/models"
 	"go.uber.org/zap"
 	"time"
 )
@@ -28,8 +28,8 @@ func createTablesIfNeed(db *sql.DB) {
 	}
 }
 
-func findByOrig(ctx context.Context, db *sql.DB, origURL string) (urlRow *URLRow, ok bool, err error) {
-	var v URLRow
+func findByOrig(ctx context.Context, db *sql.DB, origURL string) (urlRow *models.URLRow, ok bool, err error) {
+	var v models.URLRow
 	err = db.QueryRowContext(ctx,
 		`SELECT uuid, short, original FROM urls WHERE original = $1`,
 		origURL).Scan(&v.Uuid, &v.ShortURL, &v.OrigURL)
@@ -43,8 +43,8 @@ func findByOrig(ctx context.Context, db *sql.DB, origURL string) (urlRow *URLRow
 	}
 }
 
-func findByShort(ctx context.Context, db *sql.DB, shortURL string) (urlRow *URLRow, ok bool, err error) {
-	var v URLRow
+func findByShort(ctx context.Context, db *sql.DB, shortURL string) (urlRow *models.URLRow, ok bool, err error) {
+	var v models.URLRow
 	err = db.QueryRowContext(ctx,
 		"SELECT uuid, short, original FROM urls WHERE short = $1",
 		shortURL).Scan(&v.Uuid, &v.ShortURL, &v.OrigURL)

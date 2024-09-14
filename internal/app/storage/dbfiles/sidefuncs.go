@@ -4,7 +4,7 @@ import (
 	"errors"
 	"github.com/zasuchilas/shortener/internal/app/config"
 	"github.com/zasuchilas/shortener/internal/app/logger"
-	. "github.com/zasuchilas/shortener/internal/app/models"
+	"github.com/zasuchilas/shortener/internal/app/models"
 	"go.uber.org/zap"
 	"io"
 	"time"
@@ -20,7 +20,7 @@ func (d *DBFiles) isExist(shortURL string) (bool, error) {
 	return found, nil
 }
 
-func (d *DBFiles) lookup(uuid *int64, origURL, shortURL *string) (urlRow *URLRow, ok bool, err error) {
+func (d *DBFiles) lookup(uuid *int64, origURL, shortURL *string) (urlRow *models.URLRow, ok bool, err error) {
 	condCount := 0
 	if uuid != nil {
 		condCount++

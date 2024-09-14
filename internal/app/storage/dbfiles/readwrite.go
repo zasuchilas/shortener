@@ -3,7 +3,7 @@ package dbfiles
 import (
 	"encoding/json"
 	"github.com/zasuchilas/shortener/internal/app/logger"
-	. "github.com/zasuchilas/shortener/internal/app/models"
+	"github.com/zasuchilas/shortener/internal/app/models"
 	"os"
 )
 
@@ -27,7 +27,7 @@ func newFileWriter(filename string) (*fileWriter, error) {
 }
 
 func (p *fileWriter) writeURLRow(uuid int64, shortURL, origURL string) error {
-	row := URLRow{
+	row := models.URLRow{
 		Uuid:     uuid,
 		ShortURL: shortURL,
 		OrigURL:  origURL,
@@ -59,8 +59,8 @@ func newFileReader(filename string) (*fileReader, error) {
 	}, nil
 }
 
-func (c *fileReader) readURLRow() (*URLRow, error) {
-	ur := &URLRow{}
+func (c *fileReader) readURLRow() (*models.URLRow, error) {
+	ur := &models.URLRow{}
 	if err := c.decoder.Decode(ur); err != nil {
 		return nil, err
 	}
