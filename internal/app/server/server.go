@@ -69,7 +69,7 @@ func (s *Server) writeURLHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	logger.Log.Debug("performing the endpoint task")
-	shortURL, _, err := s.store.WriteURL(r.Context(), origURL)
+	shortURL, err := s.store.WriteURL(r.Context(), origURL)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
@@ -120,7 +120,7 @@ func (s *Server) shortenHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	logger.Log.Debug("performing the endpoint task")
-	shortURL, _, err := s.store.WriteURL(r.Context(), origURL)
+	shortURL, err := s.store.WriteURL(r.Context(), origURL)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
