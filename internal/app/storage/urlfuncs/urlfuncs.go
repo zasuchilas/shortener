@@ -4,6 +4,8 @@ import (
 	"errors"
 	"fmt"
 	"github.com/zasuchilas/shortener/internal/app/config"
+	"github.com/zasuchilas/shortener/internal/app/logger"
+	"go.uber.org/zap"
 	"net/url"
 	"regexp"
 	"strings"
@@ -26,7 +28,8 @@ func CleanURL(raw string) (string, error) {
 	// basic conditions
 	_, err := url.Parse(raw)
 	if err != nil {
-		return raw, err
+		logger.Log.Error("url.Parse", zap.String("raw", raw), zap.Error(err))
+		//return raw, err
 	}
 
 	// checking scheme
