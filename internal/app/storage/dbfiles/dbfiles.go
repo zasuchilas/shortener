@@ -38,15 +38,22 @@ func New() *DBFiles {
 
 func (d *DBFiles) Stop() {}
 
-func (d *DBFiles) WriteURL(ctx context.Context, origURL string) (shortURL string, err error) {
+func (d *DBFiles) WriteURL(ctx context.Context, origURL string) (shortURL string, conflict bool, err error) {
+	logger.Log.Debug("checking if already exist")
+	shortURL, ok := d.urls[origURL]
+	if ok {
+		return shortURL, true, nil
+	}
+
+	logger.Log.Debug("writing URL")
 	urlRows, err := d.WriteURLs(ctx, []string{origURL})
 	if err != nil {
-		return "", err
+		return "", false, err
 	}
 	if urlRows == nil || urlRows[origURL] == nil {
-		return "", errors.New("something wrong with writing URL")
+		return "", false, errors.New("something wrong with writing URL")
 	}
-	return urlRows[origURL].ShortURL, nil
+	return urlRows[origURL].ShortURL, false, nil
 }
 
 func (d *DBFiles) ReadURL(_ context.Context, shortURL string) (origURL string, err error) {

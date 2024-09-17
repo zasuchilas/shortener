@@ -38,15 +38,26 @@ func (d *DBPgsql) Stop() {
 	}
 }
 
-func (d *DBPgsql) WriteURL(ctx context.Context, origURL string) (shortURL string, err error) {
+func (d *DBPgsql) WriteURL(ctx context.Context, origURL string) (shortURL string, conflict bool, err error) {
+
+	logger.Log.Debug("checking if already exist")
+	row, found, err := findByOrig(ctx, d.db, origURL)
+	if err != nil {
+		return "", false, err
+	}
+	if found {
+		return row.ShortURL, true, nil
+	}
+
+	logger.Log.Debug("writing URL")
 	urlRows, err := d.WriteURLs(ctx, []string{origURL})
 	if err != nil {
-		return "", err
+		return "", false, err
 	}
 	if urlRows == nil || urlRows[origURL] == nil {
-		return "", errors.New("something wrong with writing URL")
+		return "", false, errors.New("something wrong with writing URL")
 	}
-	return urlRows[origURL].ShortURL, nil
+	return urlRows[origURL].ShortURL, false, nil
 }
 
 func (d *DBPgsql) ReadURL(ctx context.Context, shortURL string) (origURL string, err error) {
@@ -83,8 +94,7 @@ func (d *DBPgsql) WriteURLs(ctx context.Context, origURLs []string) (urlRows map
 	stmt, err := tx.PrepareContext(ctx,
 		"INSERT INTO urls (short, original) "+
 			"SELECT $1, $2 "+
-			"WHERE NOT EXISTS (SELECT 1 FROM urls WHERE original = $3) "+
-			"RETURNING uuid")
+			"WHERE NOT EXISTS (SELECT 1 FROM urls WHERE original = $3)")
 	if err != nil {
 		logger.Log.Error("preparing stmt", zap.Error(err))
 		return nil, err

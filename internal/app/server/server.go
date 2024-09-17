@@ -69,15 +69,18 @@ func (s *Server) writeURLHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	logger.Log.Debug("performing the endpoint task")
-	shortURL, err := s.store.WriteURL(r.Context(), origURL)
+	shortURL, conflict, err := s.store.WriteURL(r.Context(), origURL)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 	resp := urlfuncs.EnrichURL(shortURL)
-
 	w.Header().Set("Content-Type", "text/plain")
-	w.WriteHeader(http.StatusCreated)
+	if conflict {
+		w.WriteHeader(http.StatusConflict)
+	} else {
+		w.WriteHeader(http.StatusCreated)
+	}
 
 	_, err = w.Write([]byte(resp))
 	if err != nil {
@@ -120,7 +123,7 @@ func (s *Server) shortenHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	logger.Log.Debug("performing the endpoint task")
-	shortURL, err := s.store.WriteURL(r.Context(), origURL)
+	shortURL, conflict, err := s.store.WriteURL(r.Context(), origURL)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
@@ -132,7 +135,11 @@ func (s *Server) shortenHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusCreated)
+	if conflict {
+		w.WriteHeader(http.StatusConflict)
+	} else {
+		w.WriteHeader(http.StatusCreated)
+	}
 
 	logger.Log.Debug("encoding response")
 	enc := json.NewEncoder(w)
