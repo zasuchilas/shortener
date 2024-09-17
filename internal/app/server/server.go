@@ -200,8 +200,6 @@ func (s *Server) shortenBatchHandler(w http.ResponseWriter, r *http.Request) {
 	logger.Log.Debug("creating success response")
 	resp := make(models.ShortenBatchResponse, len(req))
 	for i, requestItem := range req {
-		fmt.Println("requestItem", requestItem)
-		fmt.Println("urlRows", urlRows[requestItem.OriginalURL])
 		resp[i] = models.ShortenBatchResponseItem{
 			CorrelationID: requestItem.CorrelationID,
 			ShortURL:      urlRows[requestItem.OriginalURL].ShortURL,
