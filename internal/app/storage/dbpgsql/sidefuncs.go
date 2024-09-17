@@ -6,7 +6,6 @@ import (
 	"github.com/zasuchilas/shortener/internal/app/logger"
 	"github.com/zasuchilas/shortener/internal/app/models"
 	"go.uber.org/zap"
-	"strings"
 	"time"
 )
 
@@ -40,25 +39,29 @@ func getNextUUID(ctx context.Context, tx *sql.Tx) (int64, error) {
 	return lastUUID + 1, nil
 }
 
-func selectByOrigURLs(ctx context.Context, db *sql.DB, origURLs []string) (shortURLs []string, err error) {
+func selectByOrigURLs(ctx context.Context, db *sql.DB, origURLs []string) (urlRows map[string]*models.URLRow, err error) {
 
+	logger.Log.Debug("selectByOrigURLs", zap.Any("origURLs", origURLs))
 	rows, err := db.QueryContext(ctx,
-		`SELECT short FROM urls WHERE original IN ($1)`,
-		strings.Join(origURLs, ","))
+		`SELECT uuid, short, original FROM urls WHERE original = any($1)`,
+		origURLs) // strings.Join(origURLs, ","))
 	if err != nil {
 		logger.Log.Error("creating query", zap.Error(err))
 		return nil, err
 	}
 	defer rows.Close()
 
+	urlRows = make(map[string]*models.URLRow)
 	for rows.Next() {
-		var shortURL string
-		err = rows.Scan(&shortURL)
+		logger.Log.Debug("row")
+		var urlRow models.URLRow
+		err = rows.Scan(&urlRow.UUID, &urlRow.ShortURL, &urlRow.OrigURL)
 		if err != nil {
 			logger.Log.Error("scanning rows", zap.Error(err))
 			return nil, err
 		}
-		shortURLs = append(shortURLs, shortURL)
+		logger.Log.Debug("row next", zap.Any("row", urlRow))
+		urlRows[urlRow.OrigURL] = &urlRow
 	}
 
 	err = rows.Err()
@@ -67,7 +70,7 @@ func selectByOrigURLs(ctx context.Context, db *sql.DB, origURLs []string) (short
 		return nil, err
 	}
 
-	return shortURLs, nil
+	return urlRows, nil
 }
 
 func findByShort(ctx context.Context, db *sql.DB, shortURL string) (urlRow *models.URLRow, ok bool, err error) {

@@ -8,6 +8,7 @@ import (
 	_ "github.com/jackc/pgx/v5/stdlib"
 	"github.com/zasuchilas/shortener/internal/app/config"
 	"github.com/zasuchilas/shortener/internal/app/logger"
+	"github.com/zasuchilas/shortener/internal/app/models"
 	"github.com/zasuchilas/shortener/internal/app/storage/hashfuncs"
 	"go.uber.org/zap"
 	"time"
@@ -38,14 +39,14 @@ func (d *DBPgsql) Stop() {
 }
 
 func (d *DBPgsql) WriteURL(ctx context.Context, origURL string) (shortURL string, err error) {
-	shortURLs, err := d.WriteURLs(ctx, []string{origURL})
+	urlRows, err := d.WriteURLs(ctx, []string{origURL})
 	if err != nil {
 		return "", err
 	}
-	if len(shortURLs) != 1 {
+	if urlRows == nil || urlRows[origURL] == nil {
 		return "", errors.New("something wrong with writing URL")
 	}
-	return shortURLs[0], nil
+	return urlRows[origURL].ShortURL, nil
 }
 
 func (d *DBPgsql) ReadURL(ctx context.Context, shortURL string) (origURL string, err error) {
@@ -64,7 +65,7 @@ func (d *DBPgsql) Ping(ctx context.Context) error {
 	return d.db.PingContext(ctx)
 }
 
-func (d *DBPgsql) WriteURLs(ctx context.Context, origURLs []string) (shortURLs []string, err error) {
+func (d *DBPgsql) WriteURLs(ctx context.Context, origURLs []string) (urlRows map[string]*models.URLRow, err error) {
 
 	ctxTm, cancel := context.WithTimeout(ctx, 3*time.Second)
 	defer cancel()
@@ -128,10 +129,10 @@ loop:
 	}
 
 	logger.Log.Debug("getting inserted urls")
-	shortURLs, err = selectByOrigURLs(ctx, d.db, origURLs)
+	urlRows, err = selectByOrigURLs(ctx, d.db, origURLs)
 	if err != nil {
 		logger.Log.Error("finding inserted url in postgresql storage (not impossible)", zap.Error(err))
 		return nil, err
 	}
-	return shortURLs, nil
+	return urlRows, nil
 }

@@ -18,7 +18,7 @@ import (
 )
 
 const (
-	logLevel = "debug"
+	logLevel = "info"
 )
 
 type App struct {

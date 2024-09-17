@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/zasuchilas/shortener/internal/app/logger"
+	"github.com/zasuchilas/shortener/internal/app/models"
 	"github.com/zasuchilas/shortener/internal/app/storage/hashfuncs"
 	"go.uber.org/zap"
 	"sync"
@@ -30,14 +31,14 @@ func New() *DBMaps {
 func (d *DBMaps) Stop() {}
 
 func (d *DBMaps) WriteURL(ctx context.Context, origURL string) (shortURL string, err error) {
-	shortURLs, err := d.WriteURLs(ctx, []string{origURL})
+	urlRows, err := d.WriteURLs(ctx, []string{origURL})
 	if err != nil {
 		return "", err
 	}
-	if len(shortURLs) != 1 {
+	if urlRows == nil || urlRows[origURL] == nil {
 		return "", errors.New("something wrong with writing URL")
 	}
-	return shortURLs[0], nil
+	return urlRows[origURL].ShortURL, nil
 }
 
 func (d *DBMaps) ReadURL(_ context.Context, shortURL string) (origURL string, err error) {
@@ -56,7 +57,9 @@ func (d *DBMaps) Ping(_ context.Context) error {
 	return errors.New("not allowed")
 }
 
-func (d *DBMaps) WriteURLs(ctx context.Context, origURLs []string) (shortURLs []string, err error) {
+func (d *DBMaps) WriteURLs(ctx context.Context, origURLs []string) (urlRows map[string]*models.URLRow, err error) {
+
+	urlRows = make(map[string]*models.URLRow)
 
 	ctxTm, cancel := context.WithTimeout(ctx, 3*time.Second)
 	defer cancel()
@@ -78,7 +81,17 @@ loop:
 			shortURL, found := d.urls[origURL]
 			if found {
 				logger.Log.Debug("row already exist", zap.String("shortURL", shortURL))
-				shortURLs = append(shortURLs, shortURL)
+				uuid, e := hashfuncs.DecodeZeroHash(shortURL)
+				if e != nil {
+					logger.Log.Error("DecodeZeroHash when row already exist", zap.Error(err))
+					err = e
+					break loop
+				}
+				urlRows[origURL] = &models.URLRow{
+					UUID:     uuid,
+					ShortURL: shortURL,
+					OrigURL:  origURL,
+				}
 				continue
 			}
 
@@ -87,14 +100,19 @@ loop:
 			d.urls[origURL] = shortURL
 			d.hash[shortURL] = origURL
 			d.lastID = nextID
-			shortURLs = append(shortURLs, shortURL)
 			logger.Log.Debug("inserted new row",
 				zap.String("shortURL", shortURL), zap.String("origURL", origURL))
+
+			urlRows[origURL] = &models.URLRow{
+				UUID:     nextID,
+				ShortURL: shortURL,
+				OrigURL:  origURL,
+			}
 		}
 	}
 	if err != nil {
 		return nil, err
 	}
 
-	return shortURLs, nil
+	return urlRows, nil
 }

@@ -173,26 +173,40 @@ func (s *Server) shortenBatchHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	logger.Log.Debug("creating origURLs for query", zap.Int("len(request)", len(req)))
+	origURLs := make([]string, 0)
+	for _, item := range req {
+		origURLs = append(origURLs, item.OriginalURL)
+	}
+	logger.Log.Debug("origURLs created", zap.Int("len(origURLs)", len(origURLs)))
+	if len(req) != len(origURLs) {
+		logger.Log.Error("len(req) != len(origURLs)")
+	}
+
 	start := time.Now()
 	logger.Log.Debug("batching data starting", zap.Time("start", start))
 
-	// transaction + stored + -named
-	// tx err -> err bundle 5 tries
-	// writeURL change to multi params (maps/file already use tx <- change retry placing)
-	// indexes to db
-
-	// pre
-	// create dataset for work
-	// invalid items (fill empty)
-	// double items (skip)
-	// already used items (fill)
+	urlRows, err := s.store.WriteURLs(r.Context(), origURLs)
+	if err != nil {
+		logger.Log.Error("writing URLs error", zap.Error(err))
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+	}
 
 	end := time.Now()
 	logger.Log.Debug("batching data ending",
 		zap.Duration("duration", time.Since(start)),
 		zap.Time("end", end))
 
-	resp := req
+	logger.Log.Debug("creating success response")
+	resp := make(models.ShortenBatchResponse, len(req))
+	for i, requestItem := range req {
+		fmt.Println("requestItem", requestItem)
+		fmt.Println("urlRows", urlRows[requestItem.OriginalURL])
+		resp[i] = models.ShortenBatchResponseItem{
+			CorrelationID: requestItem.CorrelationID,
+			ShortURL:      urlRows[requestItem.OriginalURL].ShortURL,
+		}
+	}
 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusCreated)
