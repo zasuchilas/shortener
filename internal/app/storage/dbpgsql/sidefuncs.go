@@ -33,7 +33,7 @@ func getNextUUID(ctx context.Context, tx *sql.Tx) (int64, error) {
 	if err != nil {
 		return 0, err
 	}
-	if isCalled == false {
+	if !isCalled {
 		return lastUUID, nil
 	}
 	return lastUUID + 1, nil
