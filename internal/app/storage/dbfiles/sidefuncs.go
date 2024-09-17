@@ -5,12 +5,12 @@ import (
 	"github.com/zasuchilas/shortener/internal/app/config"
 	"github.com/zasuchilas/shortener/internal/app/logger"
 	"github.com/zasuchilas/shortener/internal/app/models"
+	"github.com/zasuchilas/shortener/internal/app/storage/hashfuncs"
 	"go.uber.org/zap"
 	"io"
-	"time"
 )
 
-// TODO: cache (use lib)
+// as an option: use cache lib with reading from file
 
 func (d *DBFiles) isExist(shortURL string) (bool, error) {
 	_, found, err := d.lookup(nil, nil, &shortURL)
@@ -18,6 +18,42 @@ func (d *DBFiles) isExist(shortURL string) (bool, error) {
 		return false, err
 	}
 	return found, nil
+}
+
+func (d *DBFiles) loadFromFile() (lastID int64, err error) {
+	r, err := newFileReader(config.FileStoragePath)
+	if err != nil {
+		return 0, err
+	}
+	defer r.close()
+
+	var lastHash string
+	for {
+		row, e := r.readURLRow()
+		if e == io.EOF {
+			break
+		}
+		if e != nil {
+			logger.Log.Debug("reading urls from file", zap.Error(err))
+			err = e
+			break
+		}
+
+		d.urls[row.OrigURL] = row.ShortURL
+		d.hash[row.ShortURL] = row.OrigURL
+		lastHash = row.ShortURL
+	}
+
+	if lastHash == "" {
+		return 0, nil
+	}
+
+	lastID, err = hashfuncs.DecodeZeroHash(lastHash)
+	if err != nil {
+		return 0, err
+	}
+
+	return lastID, nil
 }
 
 func (d *DBFiles) lookup(uuid *int64, origURL, shortURL *string) (urlRow *models.URLRow, ok bool, err error) {
@@ -75,15 +111,12 @@ func (d *DBFiles) lookup(uuid *int64, origURL, shortURL *string) (urlRow *models
 	return urlRow, ok, err
 }
 
-func (d *DBFiles) writeRow(shortURL, origURL string) error {
-	d.mutex.Lock()
-	defer d.mutex.Unlock()
-
+func (d *DBFiles) writeRow(uuid int64, shortURL, origURL string) error {
 	w, err := newFileWriter(config.FileStoragePath)
 	if err != nil {
 		return err
 	}
 	defer w.close()
 
-	return w.writeURLRow(time.Now().Unix(), shortURL, origURL)
+	return w.writeURLRow(uuid, shortURL, origURL)
 }

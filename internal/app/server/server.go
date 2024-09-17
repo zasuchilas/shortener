@@ -156,7 +156,7 @@ func (s *Server) shortenBatchHandler(w http.ResponseWriter, r *http.Request) {
 	start := time.Now()
 	logger.Log.Debug("batching data starting", zap.Time("start", start))
 
-	// transaction + stored + named
+	// transaction + stored + -named
 	// tx err -> err bundle 5 tries
 	// writeURL change to multi params (maps/file already use tx <- change retry placing)
 	// indexes to db

@@ -28,6 +28,20 @@ func createTablesIfNeed(db *sql.DB) {
 	}
 }
 
+func getNextUUID(ctx context.Context, db *sql.DB) (int64, error) {
+	var lastUUID int64
+	var isCalled bool
+	err := db.QueryRowContext(ctx,
+		`SELECT last_value, is_called FROM urls_uuid_seq`).Scan(&lastUUID, &isCalled)
+	if err != nil {
+		return 0, err
+	}
+	if isCalled == false {
+		return lastUUID, nil
+	}
+	return lastUUID + 1, nil
+}
+
 func findByOrig(ctx context.Context, db *sql.DB, origURL string) (urlRow *models.URLRow, ok bool, err error) {
 	var v models.URLRow
 	err = db.QueryRowContext(ctx,

@@ -4,11 +4,13 @@ import (
 	"context"
 	"database/sql"
 	"errors"
+	"fmt"
 	_ "github.com/jackc/pgx/v5/stdlib"
 	"github.com/zasuchilas/shortener/internal/app/config"
 	"github.com/zasuchilas/shortener/internal/app/logger"
 	"github.com/zasuchilas/shortener/internal/app/storage/hashfuncs"
 	"go.uber.org/zap"
+	"time"
 )
 
 // DBPgsql is a postgresql storage implementation
@@ -37,7 +39,10 @@ func (d *DBPgsql) Stop() {
 
 func (d *DBPgsql) WriteURL(ctx context.Context, origURL string) (shortURL string, was bool, err error) {
 
-	logger.Log.Debug("find in postgresql storage", zap.String("origURL", origURL))
+	ctxTm, cancel := context.WithTimeout(ctx, 3*time.Second)
+	defer cancel()
+
+	logger.Log.Debug("find is ready in postgresql storage", zap.String("origURL", origURL))
 	v, found, err := findByOrig(ctx, d.db, origURL)
 	if err != nil {
 		logger.Log.Error("finding original url in postgresql storage", zap.Error(err), zap.String("origURL", origURL))
@@ -47,16 +52,49 @@ func (d *DBPgsql) WriteURL(ctx context.Context, origURL string) (shortURL string
 		return v.ShortURL, true, nil
 	}
 
-	// TODO: other way better
+	logger.Log.Debug("start tx in postgresql storage", zap.String("origURL", origURL))
+	tx, err := d.db.BeginTx(ctx, nil)
+	if err != nil {
+		return "", false, err
+	}
+	defer tx.Rollback()
 
-	logger.Log.Debug("making short url", zap.String("origURL", origURL))
-	shortURL, err = hashfuncs.MakeShortURL(d.isExist)
+	//stmt, err := tx.PrepareContext(ctx,
+	//	"INSERT INTO urls (uuid, short, original) VALUES ($1, $2, $3)")
+	stmt, err := tx.PrepareContext(ctx,
+		"INSERT INTO urls (short, original) VALUES ($1, $2)")
+	if err != nil {
+		logger.Log.Error("preparing stmt", zap.Error(err))
+		return "", false, err
+	}
+	defer stmt.Close()
+
+	select {
+	case <-ctxTm.Done():
+		err = fmt.Errorf("the operation was canceled")
+	default:
+		err = nil
+	}
 	if err != nil {
 		return "", false, err
 	}
 
-	logger.Log.Debug("append to postgresql storage", zap.String("origURL", origURL))
-	err = writeRow(ctx, d.db, shortURL, origURL)
+	nextUUID, err := getNextUUID(ctx, d.db)
+	logger.Log.Debug("next uuid", zap.Int64("uuid", nextUUID))
+	if err != nil {
+		logger.Log.Error("getting next uuid", zap.Error(err))
+		return "", false, err
+	}
+	shortURL = hashfuncs.EncodeZeroHash(nextUUID)
+
+	//_, err = stmt.ExecContext(ctx, nextUUID, shortURL, origURL)
+	_, err = stmt.ExecContext(ctx, shortURL, origURL)
+	if err != nil {
+		logger.Log.Error("executing stmt", zap.Error(err))
+		return "", false, err
+	}
+
+	err = tx.Commit()
 	if err != nil {
 		return "", false, err
 	}
