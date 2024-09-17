@@ -43,12 +43,9 @@ func (d *DBFiles) WriteURL(ctx context.Context, origURL string) (shortURL string
 	defer cancel()
 
 	logger.Log.Debug("find is ready in file storage", zap.String("origURL", origURL))
-	v, found, err := d.lookup(nil, &origURL, nil)
-	if err != nil {
-		return "", false, err
-	}
+	v, found := d.urls[origURL]
 	if found {
-		return v.ShortURL, true, nil
+		return v, true, nil
 	}
 
 	logger.Log.Debug("start ~tx in file storage", zap.String("origURL", origURL))
