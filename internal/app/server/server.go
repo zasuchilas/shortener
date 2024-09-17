@@ -202,7 +202,7 @@ func (s *Server) shortenBatchHandler(w http.ResponseWriter, r *http.Request) {
 	for i, requestItem := range req {
 		resp[i] = models.ShortenBatchResponseItem{
 			CorrelationID: requestItem.CorrelationID,
-			ShortURL:      urlRows[requestItem.OriginalURL].ShortURL,
+			ShortURL:      urlfuncs.EnrichURL(urlRows[requestItem.OriginalURL].ShortURL),
 		}
 	}
 
