@@ -15,8 +15,8 @@ func createTablesIfNeed(db *sql.DB) {
 
 	q := `CREATE TABLE IF NOT EXISTS urls (
 					uuid serial primary key,
-					short varchar(254) not null,
-					original varchar(254) not null
+					short varchar(254) not null UNIQUE,
+					original varchar(254) not null UNIQUE
 				);`
 
 	// TODO: use scheme
@@ -88,9 +88,15 @@ func (d *DBPgsql) isExist(shortURL string) (bool, error) {
 }
 
 func writeRow(ctx context.Context, db *sql.DB, shortURL, origURL string) error {
+	//_, err := db.ExecContext(ctx,
+	//	"INSERT INTO urls (short, original) VALUES ($1, $2) ON CONFLICT DO NOTHING",
+	//	shortURL, origURL)
 	_, err := db.ExecContext(ctx,
-		"INSERT INTO urls (short, original) VALUES ($1, $2)",
+		"INSERT INTO urls (short, original) "+
+			"SELECT $1, $2 "+
+			"WHERE NOT EXISTS (SELECT 1 FROM urls WHERE original = $2)",
 		shortURL, origURL)
+
 	if err != nil {
 		return err
 	}

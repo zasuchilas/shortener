@@ -3,6 +3,7 @@ package server
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"github.com/go-chi/chi/v5"
 	"github.com/zasuchilas/shortener/internal/app/config"
 	"github.com/zasuchilas/shortener/internal/app/logger"
@@ -12,6 +13,7 @@ import (
 	"go.uber.org/zap"
 	"io"
 	"net/http"
+	"strings"
 	"time"
 )
 
@@ -150,6 +152,24 @@ func (s *Server) shortenBatchHandler(w http.ResponseWriter, r *http.Request) {
 	if err := dec.Decode(&req); err != nil {
 		logger.Log.Debug("cannot decode request JSON body", zap.Error(err))
 		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	wrongBatchItems := make([]string, 0)
+
+	logger.Log.Debug("checking request data")
+	for i, item := range req {
+		origURL, e := urlfuncs.CleanURL(item.OriginalURL)
+		if e != nil {
+			rowErr := fmt.Sprintf("Pos: %d, correlation_id: \"%s\", original_url: \"%s\", error: \"%s\"",
+				i, item.CorrelationID, item.OriginalURL, e.Error())
+			wrongBatchItems = append(wrongBatchItems, rowErr)
+			continue
+		}
+		req[i].OriginalURL = origURL
+	}
+	if len(wrongBatchItems) > 0 {
+		http.Error(w, strings.Join(wrongBatchItems, ", "), http.StatusBadRequest)
 		return
 	}
 
