@@ -27,7 +27,7 @@ func New() *DBPgsql {
 	}
 
 	logger.Log.Debug("creating db tables if need")
-	createTablesIfNeed(pg)
+	createTablesIfNeed(pg) // TODO: constant table creation rows can be migrated
 
 	return &DBPgsql{pg}
 }

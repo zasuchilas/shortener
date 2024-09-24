@@ -10,6 +10,7 @@ var (
 	BaseURL         string
 	FileStoragePath string
 	DatabaseDSN     string
+	SecretKey       string
 )
 
 func ParseFlags() {
@@ -18,6 +19,7 @@ func ParseFlags() {
 	flag.StringVar(&BaseURL, "b", "localhost:8080", "address and port for include in shortURLs")
 	flag.StringVar(&FileStoragePath, "f", "", "path to the data storage file")
 	flag.StringVar(&DatabaseDSN, "d", "", "database connection string")
+	flag.StringVar(&SecretKey, "k", "supersecretkey", "the secret key for user tokens")
 	flag.Parse()
 
 	// using env (replace)
@@ -32,6 +34,9 @@ func ParseFlags() {
 	}
 	if envDatabaseDSN := os.Getenv("DATABASE_DSN"); envDatabaseDSN != "" {
 		DatabaseDSN = envDatabaseDSN
+	}
+	if envSecretKey := os.Getenv("SECRET_KEY"); envSecretKey != "" {
+		SecretKey = envSecretKey
 	}
 }
 

@@ -2,6 +2,11 @@
 
 URL shortening service
 
+- [go-autotests](https://github.com/Yandex-Practicum/go-autotests)
+- [Курс «Продвинутый Go‑разработчик»](https://practicum.yandex.ru/go-advanced/)
+- [Карты курсов Go с нуля и Продвинутый Go](https://code.s3.yandex.net/go/1f_vs_2f.pdf)
+
+
 Commands:  
 ```shell
 go test -v ./...
