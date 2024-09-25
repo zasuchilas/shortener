@@ -4,6 +4,7 @@ import (
 	"context"
 	"github.com/zasuchilas/shortener/internal/app/config"
 	"github.com/zasuchilas/shortener/internal/app/logger"
+	"github.com/zasuchilas/shortener/internal/app/secure"
 	"github.com/zasuchilas/shortener/internal/app/server"
 	"github.com/zasuchilas/shortener/internal/app/storage"
 	"github.com/zasuchilas/shortener/internal/app/storage/dbfiles"
@@ -18,7 +19,7 @@ import (
 )
 
 const (
-	logLevel = "info"
+	logLevel = "debug"
 )
 
 type App struct {
@@ -28,6 +29,7 @@ type App struct {
 	waitGroup  *sync.WaitGroup
 	srv        *server.Server
 	store      storage.Storage
+	secure     *secure.Secure
 }
 
 func New() *App {
@@ -59,7 +61,9 @@ func (a *App) Run() {
 		a.store = dbmaps.New()
 	}
 
-	a.srv = server.New(a.store)
+	a.secure = secure.New(config.SecretKey, a.store)
+
+	a.srv = server.New(a.store, a.secure)
 	a.waitGroup.Add(1)
 	go a.srv.Start()
 

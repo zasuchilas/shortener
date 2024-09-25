@@ -32,8 +32,9 @@ func TestZeroHash(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			hash := EncodeZeroHash(tt.value)
 			id, err := DecodeZeroHash(hash)
-			t.Logf("value: %d hash: %s id: %d value==id: %v len(hash): %d",
-				tt.value, hash, id, tt.value == id, len(hash))
+
+			//t.Logf("value: %d hash: %s id: %d value==id: %v len(hash): %d",
+			//	tt.value, hash, id, tt.value == id, len(hash))
 
 			assert.Equal(t, tt.value, id)
 

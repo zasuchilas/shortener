@@ -12,4 +12,5 @@ type Storage interface {
 	ReadURL(ctx context.Context, shortURL string) (origURL string, err error)
 	Ping(ctx context.Context) error
 	WriteURLs(ctx context.Context, origURLs []string) (urlRows map[string]*models.URLRow, err error)
+	NewUser(ctx context.Context) (userID int64, err error)
 }

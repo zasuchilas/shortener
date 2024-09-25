@@ -146,3 +146,7 @@ loop:
 	}
 	return urlRows, nil
 }
+
+func (d *DBPgsql) NewUser(_ context.Context) (userID int64, err error) {
+	return 0, err
+}

@@ -14,10 +14,11 @@ import (
 
 // DBMaps is a RAM storage on double maps
 type DBMaps struct {
-	urls   map[string]string
-	hash   map[string]string
-	lastID int64
-	mutex  sync.RWMutex
+	urls       map[string]string
+	hash       map[string]string
+	lastID     int64
+	lastUserID int64
+	mutex      sync.RWMutex
 }
 
 func New() *DBMaps {
@@ -122,4 +123,12 @@ loop:
 	}
 
 	return urlRows, nil
+}
+
+func (d *DBMaps) NewUser(_ context.Context) (userID int64, err error) {
+	d.mutex.Lock()
+	defer d.mutex.Unlock()
+	userID = d.lastUserID + 1
+	d.lastUserID = userID
+	return userID, nil
 }

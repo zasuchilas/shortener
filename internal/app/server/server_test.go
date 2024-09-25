@@ -4,6 +4,7 @@ import (
 	"github.com/go-resty/resty/v2"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"github.com/zasuchilas/shortener/internal/app/secure"
 	"github.com/zasuchilas/shortener/internal/app/storage/dbmaps"
 	"io"
 	"log"
@@ -16,6 +17,7 @@ import (
 
 var (
 	st  *dbmaps.DBMaps
+	sec *secure.Secure
 	s   *Server
 	srv *httptest.Server
 )
@@ -33,7 +35,8 @@ func setup() {
 	st = dbmaps.New()
 	refillDatabase()
 
-	s = New(st)
+	sec = secure.New("supersecretkey", st)
+	s = New(st, sec)
 	srv = httptest.NewServer(s.Router())
 
 	log.Println("setup completed")

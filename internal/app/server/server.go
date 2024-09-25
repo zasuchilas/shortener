@@ -8,6 +8,8 @@ import (
 	"github.com/zasuchilas/shortener/internal/app/config"
 	"github.com/zasuchilas/shortener/internal/app/logger"
 	"github.com/zasuchilas/shortener/internal/app/models"
+	"github.com/zasuchilas/shortener/internal/app/secure"
+	"github.com/zasuchilas/shortener/internal/app/server/middleware"
 	"github.com/zasuchilas/shortener/internal/app/storage"
 	"github.com/zasuchilas/shortener/internal/app/storage/urlfuncs"
 	"go.uber.org/zap"
@@ -18,12 +20,14 @@ import (
 )
 
 type Server struct {
-	store storage.Storage
+	store  storage.Storage
+	secure *secure.Secure
 }
 
-func New(s storage.Storage) *Server {
+func New(s storage.Storage, secure *secure.Secure) *Server {
 	return &Server{
-		store: s,
+		store:  s,
+		secure: secure,
 	}
 }
 
@@ -36,15 +40,21 @@ func (s *Server) Router() chi.Router {
 	r := chi.NewRouter()
 
 	// middlewares
-	r.Use(WithLogging) // r.Use(middleware.Logger)
-	r.Use(GzipMiddleware)
+	r.Use(middleware.WithLogging) // r.Use(middleware.Logger)
+	r.Use(middleware.GzipMiddleware)
 
 	// routes
-	r.Post("/", s.writeURLHandler)
 	r.Get("/{shortURL}", s.readURLHandler)
-	r.Post("/api/shorten", s.shortenHandler)
-	r.Post("/api/shorten/batch", s.shortenBatchHandler)
 	r.Get("/ping", s.ping)
+	r.Get("/api/user/urls", s.userURLsHandler)
+
+	// routes with secure cookie
+	r.Group(func(r chi.Router) {
+		r.Use(s.secure.SecureMiddleware)
+		r.Post("/", s.writeURLHandler)
+		r.Post("/api/shorten", s.shortenHandler)
+		r.Post("/api/shorten/batch", s.shortenBatchHandler)
+	})
 
 	return r
 }
@@ -235,5 +245,13 @@ func (s *Server) ping(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
+	w.WriteHeader(http.StatusOK)
+}
+
+func (s *Server) userURLsHandler(w http.ResponseWriter, r *http.Request) {
+
+	fmt.Println(r.Cookie(secure.TokenCookieName))
+	//logger.Log.Debug("")
+
 	w.WriteHeader(http.StatusOK)
 }
