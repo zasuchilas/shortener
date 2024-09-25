@@ -4,10 +4,13 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"github.com/zasuchilas/shortener/internal/app/config"
 	"github.com/zasuchilas/shortener/internal/app/logger"
 	"github.com/zasuchilas/shortener/internal/app/models"
 	"github.com/zasuchilas/shortener/internal/app/storage/hashfuncs"
+	"github.com/zasuchilas/shortener/internal/utils/filefuncs"
 	"go.uber.org/zap"
+	"io"
 	"sync"
 	"time"
 )
@@ -137,6 +140,50 @@ loop:
 	return urlRows, nil
 }
 
-func (d *DBFiles) NewUser(_ context.Context) (userID int64, err error) {
-	return 0, err
+// TODO: as an option: use cache lib with reading from file
+
+func (d *DBFiles) loadFromFile() (lastID int64, err error) {
+	r, err := filefuncs.NewFileReader(config.FileStoragePath)
+	if err != nil {
+		return 0, err
+	}
+	defer r.Close()
+
+	var lastHash string
+	for {
+		row, e := r.ReadURLRow()
+		if e == io.EOF {
+			break
+		}
+		if e != nil {
+			logger.Log.Debug("reading urls from file", zap.Error(err))
+			err = e
+			break
+		}
+
+		d.urls[row.OrigURL] = row.ShortURL
+		d.hash[row.ShortURL] = row.OrigURL
+		lastHash = row.ShortURL
+	}
+
+	if lastHash == "" {
+		return 0, nil
+	}
+
+	lastID, err = hashfuncs.DecodeZeroHash(lastHash)
+	if err != nil {
+		return 0, err
+	}
+
+	return lastID, nil
+}
+
+func (d *DBFiles) writeRow(uuid int64, shortURL, origURL string) error {
+	w, err := filefuncs.NewFileWriter(config.FileStoragePath)
+	if err != nil {
+		return err
+	}
+	defer w.Close()
+
+	return w.WriteURLRow(uuid, shortURL, origURL)
 }
