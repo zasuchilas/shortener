@@ -5,7 +5,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/zasuchilas/shortener/internal/app/secure"
-	"github.com/zasuchilas/shortener/internal/app/storage/dbmaps"
+	"github.com/zasuchilas/shortener/internal/app/storage"
 	"io"
 	"log"
 	"net/http"
@@ -16,7 +16,7 @@ import (
 )
 
 var (
-	st  *dbmaps.DBMaps
+	st  *storage.DBMaps
 	sec *secure.Secure
 	s   *Server
 	srv *httptest.Server
@@ -32,10 +32,10 @@ func TestMain(m *testing.M) {
 func setup() {
 	log.Println("setup started")
 
-	st = dbmaps.New()
+	st = storage.NewDBMaps()
 	refillDatabase()
 
-	sec = secure.New("supersecretkey", st)
+	sec = secure.New("supersecretkey", "")
 	s = New(st, sec)
 	srv = httptest.NewServer(s.Router())
 
@@ -48,7 +48,7 @@ func teardown() {
 }
 
 func refillDatabase() {
-	dbmaps.Write(st, "abcdefgh", "http://спорт.ru/")
+	storage.Write(st, 1, 1, "abcdefgh", "http://спорт.ru/")
 }
 
 func testRequest(t *testing.T, method,

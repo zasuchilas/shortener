@@ -3,6 +3,7 @@ package server
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"github.com/go-chi/chi/v5"
 	"github.com/zasuchilas/shortener/internal/app/config"
@@ -10,11 +11,12 @@ import (
 	"github.com/zasuchilas/shortener/internal/app/models"
 	"github.com/zasuchilas/shortener/internal/app/secure"
 	"github.com/zasuchilas/shortener/internal/app/storage"
-	"github.com/zasuchilas/shortener/internal/app/storage/urlfuncs"
-	"github.com/zasuchilas/shortener/pkg/compress"
+	"github.com/zasuchilas/shortener/internal/app/utils/compress"
+	"github.com/zasuchilas/shortener/internal/app/utils/urlfuncs"
 	"go.uber.org/zap"
 	"io"
 	"net/http"
+	"strconv"
 	"strings"
 	"time"
 )
@@ -63,14 +65,21 @@ func (s *Server) Stop() {}
 
 func (s *Server) writeURLHandler(w http.ResponseWriter, r *http.Request) {
 
-	logger.Log.Debug("decoding request")
+	// getting userID from context
+	userID, err := getUserID(r)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	// decoding request
 	body, err := io.ReadAll(r.Body)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 
-	logger.Log.Debug("checking request data")
+	// checking request data
 	rawURL := string(body)
 	origURL, err := urlfuncs.CleanURL(rawURL)
 	if err != nil {
@@ -78,8 +87,8 @@ func (s *Server) writeURLHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	logger.Log.Debug("performing the endpoint task")
-	shortURL, conflict, err := s.store.WriteURL(r.Context(), origURL)
+	// performing the endpoint task
+	shortURL, conflict, err := s.store.WriteURL(r.Context(), origURL, userID)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
@@ -116,7 +125,14 @@ func (s *Server) readURLHandler(w http.ResponseWriter, r *http.Request) {
 
 func (s *Server) shortenHandler(w http.ResponseWriter, r *http.Request) {
 
-	logger.Log.Debug("decoding request")
+	// getting userID from context
+	userID, err := getUserID(r)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	// decoding request
 	var req models.ShortenRequest
 	dec := json.NewDecoder(r.Body)
 	if err := dec.Decode(&req); err != nil {
@@ -125,15 +141,15 @@ func (s *Server) shortenHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	logger.Log.Debug("checking request data")
+	// checking request data
 	origURL, err := urlfuncs.CleanURL(req.URL)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 
-	logger.Log.Debug("performing the endpoint task")
-	shortURL, conflict, err := s.store.WriteURL(r.Context(), origURL)
+	// performing the endpoint task
+	shortURL, conflict, err := s.store.WriteURL(r.Context(), origURL, userID)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
@@ -163,7 +179,14 @@ func (s *Server) shortenHandler(w http.ResponseWriter, r *http.Request) {
 
 func (s *Server) shortenBatchHandler(w http.ResponseWriter, r *http.Request) {
 
-	logger.Log.Debug("decoding request")
+	// getting userID from context
+	userID, err := getUserID(r)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	// decoding request
 	var req models.ShortenBatchRequest
 	dec := json.NewDecoder(r.Body)
 	if err := dec.Decode(&req); err != nil {
@@ -172,9 +195,8 @@ func (s *Server) shortenBatchHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// checking request data
 	wrongBatchItems := make([]string, 0)
-
-	logger.Log.Debug("checking request data")
 	for i, item := range req {
 		origURL, e := urlfuncs.CleanURL(item.OriginalURL)
 		if e != nil {
@@ -203,7 +225,7 @@ func (s *Server) shortenBatchHandler(w http.ResponseWriter, r *http.Request) {
 	start := time.Now()
 	logger.Log.Debug("batching data starting", zap.Time("start", start))
 
-	urlRows, err := s.store.WriteURLs(r.Context(), origURLs)
+	urlRows, err := s.store.WriteURLs(r.Context(), origURLs, userID)
 	if err != nil {
 		logger.Log.Error("writing URLs error", zap.Error(err))
 		http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -250,8 +272,31 @@ func (s *Server) ping(w http.ResponseWriter, r *http.Request) {
 
 func (s *Server) userURLsHandler(w http.ResponseWriter, r *http.Request) {
 
-	fmt.Println(r.Cookie(secure.TokenCookieName))
-	//logger.Log.Debug("")
+	userID, err := getUserID(r)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	fmt.Println(userID)
 
 	w.WriteHeader(http.StatusOK)
+}
+
+func getUserID(r *http.Request) (userID int64, err error) {
+	// getting userID from context of request (after SecureMiddleware)
+	uid := r.Context().Value(secure.ContextUserIDKey)
+
+	// cast userID from any to int64
+	userID, err = strconv.ParseInt(fmt.Sprintf("%d", uid), 10, 64)
+	if err != nil {
+		logger.Log.Debug("there are problems with userID", zap.Error(err))
+		return 0, err
+	}
+	if userID == 0 {
+		logger.Log.Debug("something went wrong: empty userID")
+		return 0, errors.New("something went wrong: empty userID")
+	}
+
+	return userID, nil
 }

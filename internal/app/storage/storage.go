@@ -5,12 +5,18 @@ import (
 	"github.com/zasuchilas/shortener/internal/app/models"
 )
 
+const (
+	InstanceMemory     = "dbmaps"
+	InstanceFile       = "dbfiles"
+	InstancePostgresql = "dbpgsql"
+)
+
 type Storage interface {
 	Stop()
+	InstanceName() string
 
-	WriteURL(ctx context.Context, origURL string) (shortURL string, conflict bool, err error)
+	WriteURL(ctx context.Context, origURL string, userID int64) (shortURL string, conflict bool, err error)
 	ReadURL(ctx context.Context, shortURL string) (origURL string, err error)
 	Ping(ctx context.Context) error
-	WriteURLs(ctx context.Context, origURLs []string) (urlRows map[string]*models.URLRow, err error)
-	NewUser(ctx context.Context) (userID int64, err error)
+	WriteURLs(ctx context.Context, origURLs []string, userID int64) (urlRows map[string]*models.URLRow, err error)
 }

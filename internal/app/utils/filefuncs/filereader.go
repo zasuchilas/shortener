@@ -26,6 +26,11 @@ func NewFileReader(filename string) (*FileReader, error) {
 	}, nil
 }
 
+func (c *FileReader) Close() error {
+	logger.Log.Debug("FileReader closing")
+	return c.file.Close()
+}
+
 func (c *FileReader) ReadURLRow() (*models.URLRow, error) {
 	ur := &models.URLRow{}
 	if err := c.decoder.Decode(ur); err != nil {
@@ -34,7 +39,10 @@ func (c *FileReader) ReadURLRow() (*models.URLRow, error) {
 	return ur, nil
 }
 
-func (c *FileReader) Close() error {
-	logger.Log.Debug("FileReader closing")
-	return c.file.Close()
+func (c *FileReader) ReadUserRow() (*models.UserRow, error) {
+	ur := &models.UserRow{}
+	if err := c.decoder.Decode(ur); err != nil {
+		return nil, err
+	}
+	return ur, nil
 }

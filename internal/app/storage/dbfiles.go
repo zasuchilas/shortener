@@ -1,4 +1,4 @@
-package dbfiles
+package storage
 
 import (
 	"context"
@@ -7,8 +7,8 @@ import (
 	"github.com/zasuchilas/shortener/internal/app/config"
 	"github.com/zasuchilas/shortener/internal/app/logger"
 	"github.com/zasuchilas/shortener/internal/app/models"
-	"github.com/zasuchilas/shortener/internal/app/storage/hashfuncs"
-	"github.com/zasuchilas/shortener/internal/utils/filefuncs"
+	"github.com/zasuchilas/shortener/internal/app/utils/filefuncs"
+	"github.com/zasuchilas/shortener/internal/app/utils/hashfuncs"
 	"go.uber.org/zap"
 	"io"
 	"sync"
@@ -17,17 +17,19 @@ import (
 
 // DBFiles is a file storage implementation
 type DBFiles struct {
-	urls   map[string]string
-	hash   map[string]string
+	urls   map[string]*models.URLRow
+	hash   map[string]*models.URLRow
+	owners map[int64][]*models.URLRow
 	lastID int64
 	mutex  sync.RWMutex
 }
 
-func New() *DBFiles {
+func NewDBFile() *DBFiles {
 	db := &DBFiles{
-		urls:  make(map[string]string),
-		hash:  make(map[string]string),
-		mutex: sync.RWMutex{},
+		urls:   make(map[string]*models.URLRow),
+		hash:   make(map[string]*models.URLRow),
+		owners: make(map[int64][]*models.URLRow),
+		mutex:  sync.RWMutex{},
 	}
 
 	lastID, err := db.loadFromFile()
@@ -41,15 +43,19 @@ func New() *DBFiles {
 
 func (d *DBFiles) Stop() {}
 
-func (d *DBFiles) WriteURL(ctx context.Context, origURL string) (shortURL string, conflict bool, err error) {
-	logger.Log.Debug("checking if already exist")
-	shortURL, ok := d.urls[origURL]
+func (d *DBFiles) InstanceName() string {
+	return InstanceFile
+}
+
+func (d *DBFiles) WriteURL(ctx context.Context, origURL string, userID int64) (shortURL string, conflict bool, err error) {
+	// checking if already exist
+	found, ok := d.urls[origURL]
 	if ok {
-		return shortURL, true, nil
+		return found.ShortURL, true, nil
 	}
 
-	logger.Log.Debug("writing URL")
-	urlRows, err := d.WriteURLs(ctx, []string{origURL})
+	// writing URL
+	urlRows, err := d.WriteURLs(ctx, []string{origURL}, userID)
 	if err != nil {
 		return "", false, err
 	}
@@ -61,30 +67,42 @@ func (d *DBFiles) WriteURL(ctx context.Context, origURL string) (shortURL string
 
 func (d *DBFiles) ReadURL(_ context.Context, shortURL string) (origURL string, err error) {
 	d.mutex.RLock()
-	origURL, found := d.hash[shortURL]
+	found, ok := d.hash[shortURL]
 	d.mutex.RUnlock()
 
-	if !found {
+	if !ok {
 		return "", errors.New("not found")
 	}
 
-	return origURL, nil
+	return found.OrigURL, nil
 }
 
 func (d *DBFiles) Ping(_ context.Context) error {
 	return errors.New("not allowed")
 }
 
-func (d *DBFiles) WriteURLs(ctx context.Context, origURLs []string) (urlRows map[string]*models.URLRow, err error) {
+func (d *DBFiles) WriteURLs(ctx context.Context, origURLs []string, userID int64) (urlRows map[string]*models.URLRow, err error) {
 
 	urlRows = make(map[string]*models.URLRow)
 
 	ctxTm, cancel := context.WithTimeout(ctx, 3*time.Second)
 	defer cancel()
 
-	logger.Log.Debug("start ~tx in file storage")
+	// start ~tx in file storage
 	d.mutex.Lock()
 	defer d.mutex.Unlock()
+
+	w, err := filefuncs.NewFileWriter(config.FileStoragePath)
+	if err != nil {
+		return nil, err
+	}
+	defer w.Close()
+
+	// if new user (he doesn't have his data)
+	_, ex := d.owners[userID]
+	if !ex {
+		d.owners[userID] = make([]*models.URLRow, 0)
+	}
 
 loop:
 	for _, origURL := range origURLs {
@@ -93,44 +111,38 @@ loop:
 			err = fmt.Errorf("the operation was canceled")
 			break loop
 		default:
-			logger.Log.Debug("default action")
-
 			logger.Log.Debug("find is ready in file storage", zap.String("origURL", origURL))
-			shortURL, found := d.urls[origURL]
-			if found {
-				logger.Log.Debug("row already exist", zap.String("shortURL", shortURL))
-				uuid, e := hashfuncs.DecodeZeroHash(shortURL)
-				if e != nil {
-					logger.Log.Error("DecodeZeroHash when row already exist", zap.Error(err))
-					err = e
-					break loop
-				}
-				urlRows[origURL] = &models.URLRow{
-					UUID:     uuid,
-					ShortURL: shortURL,
-					OrigURL:  origURL,
-				}
+			found, ok := d.urls[origURL]
+			if ok {
+				logger.Log.Debug("row already exist", zap.String("shortURL", found.ShortURL))
+				urlRows[origURL] = found
 				continue
 			}
 
 			nextID := d.lastID + 1
-			shortURL = hashfuncs.EncodeZeroHash(nextID)
-			err = d.writeRow(nextID, shortURL, origURL)
+			shortURL := hashfuncs.EncodeZeroHash(nextID)
+			nextURLRow := &models.URLRow{
+				ID:       nextID,
+				ShortURL: shortURL,
+				OrigURL:  origURL,
+				UserID:   userID,
+			}
+
+			// writing new row to file storage
+			err = w.WriteURLRow(nextURLRow)
 			if err != nil {
 				logger.Log.Error("writing new row to file", zap.Error(err))
 				break loop
 			}
-			d.urls[origURL] = shortURL
-			d.hash[shortURL] = origURL
+
+			d.urls[origURL] = nextURLRow
+			d.hash[shortURL] = nextURLRow
+			d.owners[userID] = append(d.owners[userID], nextURLRow)
 			d.lastID = nextID
+
 			logger.Log.Debug("inserted new row",
 				zap.String("shortURL", shortURL), zap.String("origURL", origURL))
-
-			urlRows[origURL] = &models.URLRow{
-				UUID:     nextID,
-				ShortURL: shortURL,
-				OrigURL:  origURL,
-			}
+			urlRows[origURL] = nextURLRow
 		}
 	}
 	if err != nil {
@@ -156,13 +168,20 @@ func (d *DBFiles) loadFromFile() (lastID int64, err error) {
 			break
 		}
 		if e != nil {
-			logger.Log.Debug("reading urls from file", zap.Error(err))
 			err = e
+			logger.Log.Debug("reading urls from file", zap.Error(err))
 			break
 		}
 
-		d.urls[row.OrigURL] = row.ShortURL
-		d.hash[row.ShortURL] = row.OrigURL
+		d.urls[row.OrigURL] = row
+		d.hash[row.ShortURL] = row
+
+		_, ex := d.owners[row.UserID]
+		if !ex {
+			d.owners[row.UserID] = make([]*models.URLRow, 0)
+		}
+		d.owners[row.UserID] = append(d.owners[row.UserID], row)
+
 		lastHash = row.ShortURL
 	}
 
@@ -176,14 +195,4 @@ func (d *DBFiles) loadFromFile() (lastID int64, err error) {
 	}
 
 	return lastID, nil
-}
-
-func (d *DBFiles) writeRow(uuid int64, shortURL, origURL string) error {
-	w, err := filefuncs.NewFileWriter(config.FileStoragePath)
-	if err != nil {
-		return err
-	}
-	defer w.Close()
-
-	return w.WriteURLRow(uuid, shortURL, origURL)
 }

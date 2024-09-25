@@ -9,14 +9,9 @@ import (
 	"time"
 )
 
-const TokenCookieName = "token"
-
-type (
-	// http.ResponseWriter implementation for Secure middleware
-	secureResponseWriter struct {
-		http.ResponseWriter
-		UserID int64
-	}
+const (
+	TokenCookieName  = "token"
+	ContextUserIDKey = "userID"
 )
 
 func (s *Secure) SecureMiddleware(h http.Handler) http.Handler {
@@ -32,14 +27,10 @@ func (s *Secure) SecureMiddleware(h http.Handler) http.Handler {
 				w.WriteHeader(http.StatusInternalServerError)
 			}
 		}
+		logger.Log.Debug("get userID from token cookie", zap.Int64("userID", userID))
+		ctx := context.WithValue(r.Context(), ContextUserIDKey, userID)
 
-		// getting incoming cookies
-		secw := secureResponseWriter{
-			ResponseWriter: w,
-			UserID:         userID,
-		}
-
-		h.ServeHTTP(&secw, r)
+		h.ServeHTTP(w, r.WithContext(ctx))
 	}
 
 	return http.HandlerFunc(sec)
@@ -53,7 +44,7 @@ func (s *Secure) GetTokenUserID(r *http.Request) (userID int64, err error) {
 		return 0, err
 	}
 
-	logger.Log.Debug("checking token cookie params")
+	// checking token cookie params
 	err = checkTokenCookie(token)
 	if err != nil {
 		logger.Log.Debug("checking token cookie params", zap.Error(err))
@@ -64,7 +55,7 @@ func (s *Secure) GetTokenUserID(r *http.Request) (userID int64, err error) {
 }
 
 func (s *Secure) SetTokenWithUserID(ctx context.Context, w http.ResponseWriter) (userID int64, err error) {
-	userID, err = s.store.NewUser(ctx)
+	userID, err = s.NewUser(ctx)
 	if err != nil {
 		logger.Log.Error("getting new user id", zap.Error(err))
 		return 0, err

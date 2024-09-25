@@ -7,9 +7,6 @@ import (
 	"github.com/zasuchilas/shortener/internal/app/secure"
 	"github.com/zasuchilas/shortener/internal/app/server"
 	"github.com/zasuchilas/shortener/internal/app/storage"
-	"github.com/zasuchilas/shortener/internal/app/storage/dbfiles"
-	"github.com/zasuchilas/shortener/internal/app/storage/dbmaps"
-	"github.com/zasuchilas/shortener/internal/app/storage/dbpgsql"
 	"go.uber.org/zap"
 	"log"
 	"os"
@@ -19,17 +16,18 @@ import (
 )
 
 const (
-	logLevel = "debug"
+	logLevel = "info"
 )
 
 type App struct {
-	AppName    string
-	AppVersion string
-	ctx        context.Context
-	waitGroup  *sync.WaitGroup
-	srv        *server.Server
-	store      storage.Storage
-	secure     *secure.Secure
+	AppName             string
+	AppVersion          string
+	StorageInstanceName string
+	ctx                 context.Context
+	waitGroup           *sync.WaitGroup
+	srv                 *server.Server
+	store               storage.Storage
+	secure              *secure.Secure
 }
 
 func New() *App {
@@ -54,14 +52,15 @@ func (a *App) Run() {
 	logger.ConfigInfo()
 
 	if config.DatabaseDSN != "" {
-		a.store = dbpgsql.New()
+		a.store = storage.NewDBPgsql()
 	} else if config.FileStoragePath != "" {
-		a.store = dbfiles.New()
+		a.store = storage.NewDBFile()
 	} else {
-		a.store = dbmaps.New()
+		a.store = storage.NewDBMaps()
 	}
+	a.StorageInstanceName = a.store.InstanceName()
 
-	a.secure = secure.New(config.SecretKey, a.store)
+	a.secure = secure.New(config.SecretKey, a.StorageInstanceName)
 
 	a.srv = server.New(a.store, a.secure)
 	a.waitGroup.Add(1)

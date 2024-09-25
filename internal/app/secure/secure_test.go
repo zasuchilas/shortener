@@ -30,7 +30,7 @@ func TestSecure(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			secure := New(tt.key, nil)
+			secure := New(tt.key, "")
 
 			encrypted, nonce, err := secure.Encrypt([]byte(tt.data))
 			assert.NoError(t, err)
@@ -59,7 +59,7 @@ func TestPacking(t *testing.T) {
 	}
 
 	key := "supersecretkey"
-	secure := New(key, nil)
+	secure := New(key, "")
 	nonce, e := generateRandom(secure.nonceSize)
 	assert.NoError(t, e)
 

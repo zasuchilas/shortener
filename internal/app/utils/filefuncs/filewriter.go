@@ -26,16 +26,15 @@ func NewFileWriter(filename string) (*FileWriter, error) {
 	}, nil
 }
 
-func (p *FileWriter) WriteURLRow(uuid int64, shortURL, origURL string) error {
-	row := models.URLRow{
-		UUID:     uuid,
-		ShortURL: shortURL,
-		OrigURL:  origURL,
-	}
-	return p.encoder.Encode(&row)
-}
-
 func (p *FileWriter) Close() error {
 	logger.Log.Debug("FileWriter closing")
 	return p.file.Close()
+}
+
+func (p *FileWriter) WriteURLRow(url *models.URLRow) error {
+	return p.encoder.Encode(url)
+}
+
+func (p *FileWriter) WriteUserRow(user *models.UserRow) error {
+	return p.encoder.Encode(user)
 }

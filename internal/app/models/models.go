@@ -2,9 +2,17 @@ package models
 
 // URLRow is a row in file storage and postgresql storage
 type URLRow struct {
-	UUID     int64  `json:"uuid"`
+	ID       int64  `json:"id"`
 	ShortURL string `json:"short_url"`
 	OrigURL  string `json:"original_url"`
+	UserID   int64  `json:"user_id"`
+}
+
+// UserRow is a row in secure data file
+type UserRow struct {
+	UserID   int64  `json:"user_id"`
+	UserHash string `json:"user_hash"`
+	UserDB   string `json:"user_db"`
 }
 
 // api/shorten
