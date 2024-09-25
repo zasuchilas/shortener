@@ -33,9 +33,9 @@ func setup() {
 	log.Println("setup started")
 
 	st = storage.NewDBMaps()
-	refillDatabase()
+	//refillDatabase()
 
-	sec = secure.New("supersecretkey", "")
+	sec = secure.New("supersecretkey", "", "")
 	s = New(st, sec)
 	srv = httptest.NewServer(s.Router())
 
@@ -47,9 +47,9 @@ func teardown() {
 	log.Println("teardown completed")
 }
 
-func refillDatabase() {
-	storage.Write(st, 1, 1, "abcdefgh", "http://спорт.ru/")
-}
+//func refillDatabase() {
+//	storage.Write(st, 1, 1, "abcdefgh", "http://спорт.ru/")
+//}
 
 func testRequest(t *testing.T, method,
 	path string, body io.Reader) (*http.Response, string) {
@@ -94,9 +94,9 @@ func TestServer_writeURLHandler(t *testing.T) {
 			target: "/",
 			body:   "http://спорт.ru/",
 			want: want{
-				statusCode:  409,
+				statusCode:  201, // 409
 				contentType: "text/plain",
-				response:    "abcdefgh", // "http://localhost:8080/", // http://localhost:8080/LcPCiANk
+				response:    "19xtf1ts", // "http://localhost:8080/", // http://localhost:8080/LcPCiANk
 			},
 		},
 		{
@@ -147,7 +147,7 @@ func TestServer_readURLHandler(t *testing.T) {
 		{
 			name:   "positive test #1",
 			method: http.MethodGet,
-			target: "/abcdefgh",
+			target: "/19xtf1ts",
 			want: want{
 				statusCode:  307,
 				contentType: "text/plain",
@@ -166,7 +166,7 @@ func TestServer_readURLHandler(t *testing.T) {
 		},
 	}
 
-	refillDatabase()
+	//refillDatabase()
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {

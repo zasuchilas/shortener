@@ -51,7 +51,21 @@ func (s *Secure) GetTokenUserID(r *http.Request) (userID int64, err error) {
 		return 0, err
 	}
 
-	return s.unpackTokenCookieData(token.Value)
+	userID, userHash, err := s.unpackTokenCookieData(token.Value)
+	if err != nil {
+		logger.Log.Debug("unpack token cookie", zap.Error(err))
+		return 0, err
+	}
+
+	found, err := s.CheckUser(nil, userID, userHash)
+	if !found {
+		return 0, errors.New("userID not found in secure file")
+	}
+	if err != nil {
+		return 0, err
+	}
+
+	return
 }
 
 func (s *Secure) SetTokenWithUserID(ctx context.Context, w http.ResponseWriter) (userID int64, err error) {

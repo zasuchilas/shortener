@@ -9,7 +9,6 @@ import (
 	"encoding/hex"
 	"errors"
 	"fmt"
-	"github.com/zasuchilas/shortener/internal/app/config"
 	"github.com/zasuchilas/shortener/internal/app/logger"
 	"github.com/zasuchilas/shortener/internal/app/models"
 	"github.com/zasuchilas/shortener/internal/app/utils/filefuncs"
@@ -25,13 +24,15 @@ type Secure struct {
 	aesgcm    cipher.AEAD
 	nonceSize int
 
+	persist             bool
+	filePath            string
 	users               map[int64]*models.UserRow
 	lastUserID          int64
 	storageInstanceName string
 	mutex               sync.RWMutex
 }
 
-func New(key, storageInstanceName string) *Secure {
+func New(key, storageInstanceName string, filePath string) *Secure {
 
 	// creating a 32 byte key AES for using AES-256
 	k32sl := sha256.Sum256([]byte(key)) // config.SecretKey
@@ -49,11 +50,18 @@ func New(key, storageInstanceName string) *Secure {
 		logger.Log.Fatal("creating GCM for AES-256", zap.Error(err))
 	}
 
+	persist := false
+	if filePath != "" {
+		persist = true
+	}
+
 	sec := &Secure{
 		key32:               key32,
 		aesbloc:             aesbloc,
 		aesgcm:              aesgcm,
 		nonceSize:           aesgcm.NonceSize(),
+		persist:             persist,
+		filePath:            filePath,
 		users:               make(map[int64]*models.UserRow),
 		storageInstanceName: storageInstanceName,
 		mutex:               sync.RWMutex{},
@@ -123,51 +131,47 @@ func (s *Secure) packTokenCookieData(userID int64, nonce []byte) (hexadecimal st
 	return hex.EncodeToString(tokenBytes)
 }
 
-func (s *Secure) unpackTokenCookieData(hexadecimal string) (userID int64, err error) {
+func (s *Secure) unpackTokenCookieData(hexadecimal string) (userID int64, userHash string, err error) {
 
 	tokenBytes, err := hex.DecodeString(hexadecimal)
 	if err != nil {
 		logger.Log.Debug("decoding from hex", zap.Error(err))
-		return 0, err
+		return 0, "", err
 	}
 	logger.Log.Debug("decoded from hex", zap.String("hexadecimal", hexadecimal))
 
 	// getting nonce and payload
 	tbLen := len(tokenBytes)
 	if tbLen <= s.nonceSize {
-		return 0, errors.New("token cookie value is too small")
+		return 0, "", errors.New("token cookie value is too small")
 	}
 	nonce := tokenBytes[tbLen-s.nonceSize:]
 	payload := tokenBytes[:tbLen-s.nonceSize]
 
 	userHashBytes, err := s.Decrypt(payload, nonce)
-	userHash := string(userHashBytes)
+	userHash = string(userHashBytes)
 	if err != nil {
 		logger.Log.Debug("decrypting token cookie (userID as hash)", zap.Error(err))
-		return 0, err
+		return 0, "", err
 	}
 	logger.Log.Debug("decrypting token cookie (userID as hash)", zap.String("userHash", userHash))
 
 	userID, err = hashfuncs.DecodeHeroHash(userHash)
 	if err != nil {
 		logger.Log.Debug("getting userID as int64", zap.Error(err))
-		return 0, err
+		return 0, "", err
 	}
 	logger.Log.Debug("getting userID as int64", zap.Int64("userID", userID))
 
-	found, err := s.CheckUser(nil, userID, userHash)
-	if !found {
-		return 0, errors.New("userID not found in secure file")
-	}
-	if err != nil {
-		return 0, err
-	}
-
-	return userID, nil
+	return userID, userHash, nil
 }
 
 func (s *Secure) loadFromFile() (lastUserID int64, err error) {
-	r, err := filefuncs.NewFileReader(config.SecureFilePath)
+	if !s.persist {
+		return 0, nil
+	}
+
+	r, err := filefuncs.NewFileReader(s.filePath)
 	if err != nil {
 		return 0, err
 	}
@@ -214,13 +218,7 @@ func (s *Secure) NewUser(_ context.Context) (userID int64, err error) {
 		UserDB:   s.storageInstanceName,
 	}
 
-	w, err := filefuncs.NewFileWriter(config.SecureFilePath)
-	if err != nil {
-		return 0, err
-	}
-	defer w.Close()
-
-	err = w.WriteUserRow(nextUser)
+	err = s.writeUserPersist(nextUser)
 	if err != nil {
 		return 0, err
 	}
@@ -233,6 +231,20 @@ func (s *Secure) NewUser(_ context.Context) (userID int64, err error) {
 		zap.String("userDB", ""))
 
 	return nextUserID, nil
+}
+
+func (s *Secure) writeUserPersist(user *models.UserRow) error {
+	if !s.persist {
+		return nil
+	}
+
+	w, err := filefuncs.NewFileWriter(s.filePath)
+	if err != nil {
+		return err
+	}
+	defer w.Close()
+
+	return w.WriteUserRow(user)
 }
 
 func (s *Secure) CheckUser(_ context.Context, userID int64, userHash string) (found bool, err error) {

@@ -60,7 +60,7 @@ func (a *App) Run() {
 	}
 	a.StorageInstanceName = a.store.InstanceName()
 
-	a.secure = secure.New(config.SecretKey, a.StorageInstanceName)
+	a.secure = secure.New(config.SecretKey, a.StorageInstanceName, config.SecureFilePath)
 
 	a.srv = server.New(a.store, a.secure)
 	a.waitGroup.Add(1)

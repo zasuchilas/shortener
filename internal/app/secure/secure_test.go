@@ -30,7 +30,7 @@ func TestSecure(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			secure := New(tt.key, "")
+			secure := New(tt.key, "", "")
 
 			encrypted, nonce, err := secure.Encrypt([]byte(tt.data))
 			assert.NoError(t, err)
@@ -59,14 +59,14 @@ func TestPacking(t *testing.T) {
 	}
 
 	key := "supersecretkey"
-	secure := New(key, "")
+	secure := New(key, "", "")
 	nonce, e := generateRandom(secure.nonceSize)
 	assert.NoError(t, e)
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			hexadecimal := secure.packTokenCookieData(tt.userID, nonce)
-			userID, err := secure.unpackTokenCookieData(hexadecimal)
+			userID, _, err := secure.unpackTokenCookieData(hexadecimal)
 
 			assert.NoError(t, err)
 			assert.Equal(t, tt.userID, userID)
