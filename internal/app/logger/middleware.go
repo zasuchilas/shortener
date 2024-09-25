@@ -1,7 +1,6 @@
-package middleware
+package logger
 
 import (
-	"github.com/zasuchilas/shortener/internal/app/logger"
 	"go.uber.org/zap"
 	"net/http"
 	"time"
@@ -34,7 +33,7 @@ func (r *loggingResponseWriter) WriteHeader(statusCode int) {
 	r.responseData.status = statusCode // take the status code
 }
 
-func WithLogging(h http.Handler) http.Handler {
+func LoggingMiddleware(h http.Handler) http.Handler {
 	logFn := func(w http.ResponseWriter, r *http.Request) {
 		start := time.Now()
 
@@ -50,7 +49,7 @@ func WithLogging(h http.Handler) http.Handler {
 		h.ServeHTTP(&lw, r)
 
 		duration := time.Since(start)
-		logger.Log.Info(
+		Log.Info(
 			"HTTP REQUEST",
 			zap.String("uri", r.RequestURI),
 			zap.String("method", r.Method),

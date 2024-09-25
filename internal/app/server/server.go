@@ -9,9 +9,9 @@ import (
 	"github.com/zasuchilas/shortener/internal/app/logger"
 	"github.com/zasuchilas/shortener/internal/app/models"
 	"github.com/zasuchilas/shortener/internal/app/secure"
-	"github.com/zasuchilas/shortener/internal/app/server/middleware"
 	"github.com/zasuchilas/shortener/internal/app/storage"
 	"github.com/zasuchilas/shortener/internal/app/storage/urlfuncs"
+	"github.com/zasuchilas/shortener/pkg/compress"
 	"go.uber.org/zap"
 	"io"
 	"net/http"
@@ -40,8 +40,8 @@ func (s *Server) Router() chi.Router {
 	r := chi.NewRouter()
 
 	// middlewares
-	r.Use(middleware.WithLogging) // r.Use(middleware.Logger)
-	r.Use(middleware.GzipMiddleware)
+	r.Use(logger.LoggingMiddleware) // r.Use(middleware.Logger)
+	r.Use(compress.GzipMiddleware)
 
 	// routes
 	r.Get("/{shortURL}", s.readURLHandler)
