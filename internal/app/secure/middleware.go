@@ -9,9 +9,11 @@ import (
 	"time"
 )
 
+type ContextKey string
+
 const (
-	TokenCookieName  = "token"
-	ContextUserIDKey = "userID"
+	TokenCookieName             = "token"
+	ContextUserIDKey ContextKey = "userID"
 )
 
 func (s *Secure) SecureMiddleware(h http.Handler) http.Handler {
