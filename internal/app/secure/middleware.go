@@ -75,7 +75,7 @@ func (s *Secure) GetTokenUserID(r *http.Request) (userID int64, err error) {
 		return 0, err
 	}
 
-	found, err := s.CheckUser(nil, userID, userHash)
+	found, err := s.CheckUser(r.Context(), userID, userHash)
 	if !found {
 		return 0, errors.New("userID not found in secure file")
 	}
