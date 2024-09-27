@@ -152,6 +152,19 @@ loop:
 	return urlRows, nil
 }
 
+func (d *DBFiles) UserURLs(_ context.Context, userID int64) (urlRowList []*models.URLRow, err error) {
+
+	d.mutex.RLock()
+	found, ok := d.owners[userID]
+	d.mutex.RUnlock()
+
+	if !ok || len(found) == 0 {
+		return nil, fmt.Errorf("%w", ErrNotFound)
+	}
+
+	return found, nil
+}
+
 // TODO: as an option: use cache lib with reading from file
 
 func (d *DBFiles) loadFromFile() (lastID int64, err error) {

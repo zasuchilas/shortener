@@ -41,3 +41,12 @@ type ShortenBatchResponseItem struct {
 	CorrelationID string `json:"correlation_id"`
 	ShortURL      string `json:"short_url"`
 }
+
+// /api/user/urls
+
+type UserURLsResponseItem struct {
+	ShortURL    string `json:"short_url"`
+	OriginalURL string `json:"original_url"`
+}
+
+type UserURLsResponse []UserURLsResponseItem

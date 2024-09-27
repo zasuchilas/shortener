@@ -48,7 +48,12 @@ func (s *Server) Router() chi.Router {
 	// routes
 	r.Get("/{shortURL}", s.readURLHandler)
 	r.Get("/ping", s.ping)
-	r.Get("/api/user/urls", s.userURLsHandler)
+
+	// routes with guard
+	r.Group(func(r chi.Router) {
+		r.Use(s.secure.GuardMiddleware)
+		r.Get("/api/user/urls", s.userURLsHandler)
+	})
 
 	// routes with secure cookie
 	r.Group(func(r chi.Router) {
@@ -189,7 +194,7 @@ func (s *Server) shortenBatchHandler(w http.ResponseWriter, r *http.Request) {
 	// decoding request
 	var req models.ShortenBatchRequest
 	dec := json.NewDecoder(r.Body)
-	if err := dec.Decode(&req); err != nil {
+	if err = dec.Decode(&req); err != nil {
 		logger.Log.Debug("cannot decode request JSON body", zap.Error(err))
 		w.WriteHeader(http.StatusInternalServerError)
 		return
@@ -248,10 +253,10 @@ func (s *Server) shortenBatchHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusCreated)
 
-	logger.Log.Debug("encoding response")
+	// encoding response
 	enc := json.NewEncoder(w)
-	if err := enc.Encode(resp); err != nil {
-		logger.Log.Debug("error encoding response", zap.Error(err))
+	if err = enc.Encode(resp); err != nil {
+		logger.Log.Debug("error encoding response", zap.String("error", err.Error()))
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
@@ -274,13 +279,39 @@ func (s *Server) userURLsHandler(w http.ResponseWriter, r *http.Request) {
 
 	userID, err := getUserID(r)
 	if err != nil {
+		logger.Log.Debug("getting userID from ctx", zap.String("error", err.Error()))
+		w.WriteHeader(http.StatusUnauthorized) // w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	urlRowList, err := s.store.UserURLs(r.Context(), userID)
+	if err != nil {
+		if errors.Is(err, storage.ErrNotFound) {
+			w.WriteHeader(http.StatusNoContent)
+			return
+		}
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
 
-	fmt.Println(userID)
+	resp := make(models.UserURLsResponse, len(urlRowList))
+	for i, row := range urlRowList {
+		resp[i] = models.UserURLsResponseItem{
+			ShortURL:    urlfuncs.EnrichURL(row.ShortURL),
+			OriginalURL: row.OrigURL,
+		}
+	}
 
+	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
+
+	enc := json.NewEncoder(w)
+	if err = enc.Encode(resp); err != nil {
+		logger.Log.Debug("error encoding response", zap.String("error", err.Error()))
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	logger.Log.Debug("sending HTTP 200 response")
 }
 
 func getUserID(r *http.Request) (userID int64, err error) {

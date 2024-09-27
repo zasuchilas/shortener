@@ -127,6 +127,18 @@ loop:
 	return urlRows, nil
 }
 
+func (d *DBMaps) UserURLs(_ context.Context, userID int64) (urlRowList []*models.URLRow, err error) {
+	d.mutex.RLock()
+	found, ok := d.owners[userID]
+	d.mutex.RUnlock()
+
+	if !ok || len(found) == 0 {
+		return nil, fmt.Errorf("%w", ErrNotFound)
+	}
+
+	return found, nil
+}
+
 func Write(st *DBMaps, id, userID int64, shortURL, origURL string) {
 	// for testing usage
 	//st.urls["http://спорт.ru/"] = "abcdefgh"

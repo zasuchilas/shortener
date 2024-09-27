@@ -36,6 +36,24 @@ func (s *Secure) SecureMiddleware(h http.Handler) http.Handler {
 	return http.HandlerFunc(sec)
 }
 
+func (s *Secure) GuardMiddleware(h http.Handler) http.Handler {
+	sec := func(w http.ResponseWriter, r *http.Request) {
+
+		userID, err := s.GetTokenUserID(r)
+		if err != nil {
+			logger.Log.Debug("unauthorized request (hasn't contain valid token cookie)", zap.String("error", err.Error()))
+			w.WriteHeader(http.StatusUnauthorized)
+			//h.ServeHTTP(w, r)
+		} else {
+			logger.Log.Debug("get userID from token cookie", zap.Int64("userID", userID))
+			ctx := context.WithValue(r.Context(), ContextUserIDKey, userID)
+			h.ServeHTTP(w, r.WithContext(ctx))
+		}
+	}
+
+	return http.HandlerFunc(sec)
+}
+
 func (s *Secure) GetTokenUserID(r *http.Request) (userID int64, err error) {
 
 	token, err := r.Cookie(TokenCookieName)

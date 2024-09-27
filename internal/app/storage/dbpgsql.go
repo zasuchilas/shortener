@@ -45,12 +45,12 @@ func (d *DBPgsql) InstanceName() string {
 func (d *DBPgsql) WriteURL(ctx context.Context, origURL string, userID int64) (shortURL string, conflict bool, err error) {
 
 	logger.Log.Debug("checking if already exist")
-	row, found, err := findByOrig(ctx, d.db, origURL)
+	found, ex, err := findByOrig(ctx, d.db, origURL)
 	if err != nil {
 		return "", false, err
 	}
-	if found {
-		return row.ShortURL, true, nil
+	if ex {
+		return found.ShortURL, true, nil
 	}
 
 	logger.Log.Debug("writing URL")
@@ -65,15 +65,15 @@ func (d *DBPgsql) WriteURL(ctx context.Context, origURL string, userID int64) (s
 }
 
 func (d *DBPgsql) ReadURL(ctx context.Context, shortURL string) (origURL string, err error) {
-	v, found, err := findByShort(ctx, d.db, shortURL)
+	found, ex, err := findByShort(ctx, d.db, shortURL)
 	if err != nil {
 		return "", err
 	}
-	if !found {
+	if !ex {
 		return "", errors.New("not found")
 	}
 
-	return v.OrigURL, nil
+	return found.OrigURL, nil
 }
 
 func (d *DBPgsql) Ping(ctx context.Context) error {
@@ -151,6 +151,18 @@ loop:
 	return urlRows, nil
 }
 
+func (d *DBPgsql) UserURLs(ctx context.Context, userID int64) (urlRowList []*models.URLRow, err error) {
+	found, ex, err := findByUser(ctx, d.db, userID)
+	if !ex {
+		return nil, fmt.Errorf("%w", ErrNotFound)
+	}
+	if err != nil {
+		return nil, err
+	}
+
+	return found, nil
+}
+
 func createTablesIfNeed(db *sql.DB) {
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
@@ -193,38 +205,36 @@ func selectByOrigURLs(ctx context.Context, db *sql.DB, origURLs []string) (urlRo
 		`SELECT id, short, original FROM urls WHERE original = any($1)`,
 		origURLs) // strings.Join(origURLs, ","))
 	if err != nil {
-		logger.Log.Error("creating query", zap.Error(err))
+		logger.Log.Error("creating query", zap.String("error", err.Error()))
 		return nil, err
 	}
 	defer rows.Close()
 
 	urlRows = make(map[string]*models.URLRow)
 	for rows.Next() {
-		logger.Log.Debug("row")
 		var urlRow models.URLRow
 		err = rows.Scan(&urlRow.ID, &urlRow.ShortURL, &urlRow.OrigURL)
 		if err != nil {
-			logger.Log.Error("scanning rows", zap.Error(err))
+			logger.Log.Error("scanning rows", zap.String("error", err.Error()))
 			return nil, err
 		}
-		logger.Log.Debug("row next", zap.Any("row", urlRow))
 		urlRows[urlRow.OrigURL] = &urlRow
 	}
 
 	err = rows.Err()
 	if err != nil {
-		logger.Log.Error("checkin rows on errors", zap.Error(err))
+		logger.Log.Error("checkin rows on errors", zap.String("error", err.Error()))
 		return nil, err
 	}
 
 	return urlRows, nil
 }
 
-func findByShort(ctx context.Context, db *sql.DB, shortURL string) (urlRow *models.URLRow, found bool, err error) {
+func findByShort(ctx context.Context, db *sql.DB, shortURL string) (urlRow *models.URLRow, exist bool, err error) {
 	var v models.URLRow
 	err = db.QueryRowContext(ctx,
-		"SELECT id, short, original FROM urls WHERE short = $1",
-		shortURL).Scan(&v.ID, &v.ShortURL, &v.OrigURL)
+		"SELECT id, short, original, user_id FROM urls WHERE short = $1",
+		shortURL).Scan(&v.ID, &v.ShortURL, &v.OrigURL, &v.UserID)
 	switch {
 	case err == sql.ErrNoRows:
 		return nil, false, nil
@@ -235,11 +245,11 @@ func findByShort(ctx context.Context, db *sql.DB, shortURL string) (urlRow *mode
 	}
 }
 
-func findByOrig(ctx context.Context, db *sql.DB, origURL string) (urlRow *models.URLRow, found bool, err error) {
+func findByOrig(ctx context.Context, db *sql.DB, origURL string) (urlRow *models.URLRow, exist bool, err error) {
 	var v models.URLRow
 	err = db.QueryRowContext(ctx,
-		"SELECT id, short, original FROM urls WHERE original = $1",
-		origURL).Scan(&v.ID, &v.ShortURL, &v.OrigURL)
+		"SELECT id, short, original, user_id FROM urls WHERE original = $1",
+		origURL).Scan(&v.ID, &v.ShortURL, &v.OrigURL, &v.UserID)
 	switch {
 	case err == sql.ErrNoRows:
 		return nil, false, nil
@@ -248,4 +258,39 @@ func findByOrig(ctx context.Context, db *sql.DB, origURL string) (urlRow *models
 	default:
 		return &v, true, nil
 	}
+}
+
+func findByUser(ctx context.Context, db *sql.DB, userID int64) (urlRowList []*models.URLRow, exist bool, err error) {
+
+	rows, err := db.QueryContext(ctx,
+		"SELECT id, short, original, user_id FROM urls WHERE user_id = $1",
+		userID)
+	if err != nil {
+		logger.Log.Error("creating query", zap.String("error", err.Error()))
+		return nil, false, err
+	}
+	defer rows.Close()
+
+	urlRowList = make([]*models.URLRow, 0)
+	for rows.Next() {
+		var v models.URLRow
+		err = rows.Scan(&v.ID, &v.ShortURL, &v.OrigURL, &v.UserID)
+		if err != nil {
+			logger.Log.Error("scanning rows", zap.String("error", err.Error()))
+			return nil, false, err
+		}
+		urlRowList = append(urlRowList, &v)
+	}
+
+	err = rows.Err()
+	if err != nil {
+		logger.Log.Error("checkin rows on errors", zap.String("error", err.Error()))
+		return nil, false, err
+	}
+
+	if len(urlRowList) == 0 {
+		return nil, false, errors.New("not found")
+	}
+
+	return urlRowList, true, nil
 }
