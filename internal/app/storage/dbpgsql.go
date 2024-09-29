@@ -69,8 +69,13 @@ func (d *DBPgsql) ReadURL(ctx context.Context, shortURL string) (origURL string,
 	if err != nil {
 		return "", err
 	}
+
 	if !ex {
-		return "", errors.New("not found")
+		return "", fmt.Errorf("%w", ErrNotFound)
+	}
+
+	if found.Deleted {
+		return "", fmt.Errorf("%w", ErrGone)
 	}
 
 	return found.OrigURL, nil
@@ -163,6 +168,14 @@ func (d *DBPgsql) UserURLs(ctx context.Context, userID int64) (urlRowList []*mod
 	return found, nil
 }
 
+func (d *DBPgsql) CheckDeletedURLs(ctx context.Context, userID int64, shortURLs []string) error {
+	urlRows, err := selectByShortURLs(ctx, d.db, shortURLs)
+	if err != nil {
+		return err
+	}
+	return checkUserURLs(userID, urlRows)
+}
+
 func createTablesIfNeed(db *sql.DB) {
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
@@ -214,6 +227,37 @@ func selectByOrigURLs(ctx context.Context, db *sql.DB, origURLs []string) (urlRo
 	for rows.Next() {
 		var urlRow models.URLRow
 		err = rows.Scan(&urlRow.ID, &urlRow.ShortURL, &urlRow.OrigURL)
+		if err != nil {
+			logger.Log.Error("scanning rows", zap.String("error", err.Error()))
+			return nil, err
+		}
+		urlRows[urlRow.OrigURL] = &urlRow
+	}
+
+	err = rows.Err()
+	if err != nil {
+		logger.Log.Error("checkin rows on errors", zap.String("error", err.Error()))
+		return nil, err
+	}
+
+	return urlRows, nil
+}
+
+func selectByShortURLs(ctx context.Context, db *sql.DB, shortURLs []string) (urlRows map[string]*models.URLRow, err error) {
+
+	rows, err := db.QueryContext(ctx,
+		`SELECT id, short, original, user_id, deleted FROM urls WHERE short = any($1)`,
+		shortURLs)
+	if err != nil {
+		logger.Log.Error("creating query", zap.String("error", err.Error()))
+		return nil, err
+	}
+	defer rows.Close()
+
+	urlRows = make(map[string]*models.URLRow)
+	for rows.Next() {
+		var urlRow models.URLRow
+		err = rows.Scan(&urlRow.ID, &urlRow.ShortURL, &urlRow.OrigURL, &urlRow.UserID, &urlRow.Deleted)
 		if err != nil {
 			logger.Log.Error("scanning rows", zap.String("error", err.Error()))
 			return nil, err

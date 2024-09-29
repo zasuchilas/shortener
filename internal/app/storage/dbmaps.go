@@ -60,7 +60,11 @@ func (d *DBMaps) ReadURL(_ context.Context, shortURL string) (origURL string, er
 	d.mutex.RUnlock()
 
 	if !ok {
-		return "", errors.New("not found")
+		return "", fmt.Errorf("%w", ErrNotFound)
+	}
+
+	if found.Deleted {
+		return "", fmt.Errorf("%w", ErrGone)
 	}
 
 	return found.OrigURL, nil
@@ -109,6 +113,7 @@ loop:
 				ShortURL: shortURL,
 				OrigURL:  origURL,
 				UserID:   userID,
+				Deleted:  false,
 			}
 			d.urls[origURL] = nextURLRow
 			d.hash[shortURL] = nextURLRow
@@ -139,6 +144,37 @@ func (d *DBMaps) UserURLs(_ context.Context, userID int64) (urlRowList []*models
 	return found, nil
 }
 
+func (d *DBMaps) CheckDeletedURLs(_ context.Context, userID int64, shortURLs []string) error {
+	d.mutex.RLock()
+	found, ok := d.owners[userID]
+	d.mutex.RUnlock()
+
+	if !ok || len(found) == 0 {
+		return checkUserURLs(userID, nil)
+	}
+
+	// filtering users urls
+	urlRows := make(map[string]*models.URLRow)
+	for _, shortURL := range shortURLs {
+		//idx := slices.IndexFunc(found, func(u *models.URLRow) bool {
+		//	return u.ShortURL == shortURL
+		//})
+		idx := -1
+		for i := range found {
+			if found[i].ShortURL == shortURL {
+				idx = i
+				break
+			}
+		}
+		if idx > 0 {
+			f := found[idx]
+			urlRows[f.OrigURL] = f
+		}
+	}
+
+	return checkUserURLs(userID, urlRows)
+}
+
 func Write(st *DBMaps, id, userID int64, shortURL, origURL string) {
 	// for testing usage
 	//st.urls["http://спорт.ru/"] = "abcdefgh"
@@ -149,6 +185,7 @@ func Write(st *DBMaps, id, userID int64, shortURL, origURL string) {
 		ShortURL: shortURL,
 		OrigURL:  origURL,
 		UserID:   userID,
+		Deleted:  false,
 	}
 	st.urls[origURL] = urlRow
 	st.hash[shortURL] = urlRow

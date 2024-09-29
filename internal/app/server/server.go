@@ -49,13 +49,14 @@ func (s *Server) Router() chi.Router {
 	r.Get("/{shortURL}", s.readURLHandler)
 	r.Get("/ping", s.ping)
 
-	// routes with guard
+	// routes with guard (if there is no valid token returns error 401 Unauthorized)
 	r.Group(func(r chi.Router) {
 		r.Use(s.secure.GuardMiddleware)
 		r.Get("/api/user/urls", s.userURLsHandler)
+		r.Delete("/api/user/urls", s.deleteURLsHandler)
 	})
 
-	// routes with secure cookie
+	// routes with secure cookie (if there is no valid token assigns a new token)
 	r.Group(func(r chi.Router) {
 		r.Use(s.secure.SecureMiddleware)
 		r.Post("/", s.writeURLHandler)
@@ -119,7 +120,11 @@ func (s *Server) readURLHandler(w http.ResponseWriter, r *http.Request) {
 
 	origURL, err := s.store.ReadURL(r.Context(), shortURL)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		if errors.Is(err, storage.ErrGone) {
+			http.Error(w, err.Error(), http.StatusGone)
+			return
+		}
+		http.Error(w, err.Error(), http.StatusBadRequest) // according to the assignment, so, but postgresql may give an internal error
 		return
 	}
 
@@ -275,12 +280,56 @@ func (s *Server) ping(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 }
 
+func (s *Server) deleteURLsHandler(w http.ResponseWriter, r *http.Request) {
+
+	userID, err := getUserID(r)
+	if err != nil {
+		logger.Log.Debug("getting userID from ctx", zap.String("error", err.Error()))
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	// decoding request
+	var shortURLs []string
+	dec := json.NewDecoder(r.Body)
+	if err = dec.Decode(&shortURLs); err != nil {
+		logger.Log.Debug("cannot decode request JSON body", zap.String("error", err.Error()))
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+
+	// checking request data (1)
+	if shortURLs == nil || len(shortURLs) == 0 {
+		w.Header().Set("Content-Type", "text/plain")
+		w.WriteHeader(http.StatusBadRequest)
+		_, _ = w.Write([]byte("the list of short links to delete is empty"))
+		return
+	}
+
+	// checking request data (2)
+	err = s.store.CheckDeletedURLs(r.Context(), userID, shortURLs)
+	if err != nil {
+		if errors.Is(err, storage.ErrBadRequest) {
+			w.Header().Set("Content-Type", "text/plain")
+			_, _ = w.Write([]byte(err.Error()))
+			w.WriteHeader(http.StatusBadRequest)
+			return
+		}
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	// TODO: add to queue
+
+	w.WriteHeader(http.StatusAccepted)
+}
+
 func (s *Server) userURLsHandler(w http.ResponseWriter, r *http.Request) {
 
 	userID, err := getUserID(r)
 	if err != nil {
 		logger.Log.Debug("getting userID from ctx", zap.String("error", err.Error()))
-		w.WriteHeader(http.StatusUnauthorized) // w.WriteHeader(http.StatusInternalServerError)
+		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
 
@@ -314,7 +363,11 @@ func (s *Server) userURLsHandler(w http.ResponseWriter, r *http.Request) {
 	logger.Log.Debug("sending HTTP 200 response")
 }
 
+// getUserID gets the userID from the context.
+// All errors in this method are considered internal (500 InternalServerError)
+// because error 401 Unauthorized is returned earlier from middleware.
 func getUserID(r *http.Request) (userID int64, err error) {
+
 	// getting userID from context of request (after SecureMiddleware)
 	uid := r.Context().Value(secure.ContextUserIDKey)
 

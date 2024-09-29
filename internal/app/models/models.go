@@ -6,6 +6,7 @@ type URLRow struct {
 	ShortURL string `json:"short_url"`
 	OrigURL  string `json:"original_url"`
 	UserID   int64  `json:"user_id"`
+	Deleted  bool   `json:"deleted"`
 }
 
 // UserRow is a row in secure data file
@@ -42,7 +43,7 @@ type ShortenBatchResponseItem struct {
 	ShortURL      string `json:"short_url"`
 }
 
-// /api/user/urls
+// GET /api/user/urls
 
 type UserURLsResponseItem struct {
 	ShortURL    string `json:"short_url"`
