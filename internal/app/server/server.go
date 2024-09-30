@@ -315,6 +315,16 @@ func (s *Server) deleteURLsHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// checking request data (2)
+	urlCount := len(shortURLs)
+	if urlCount > storage.DeletingMaxRowsRequest {
+		w.Header().Set("Content-Type", "text/plain")
+		w.WriteHeader(http.StatusBadRequest)
+		msg := fmt.Sprintf("the list of short links to delete is too large (actual: %d, maximum: %d)", urlCount, storage.DeletingMaxRowsRequest)
+		_, _ = w.Write([]byte(msg))
+		return
+	}
+
+	// checking request data (3)
 	err = s.store.CheckDeletedURLs(r.Context(), userID, shortURLs)
 	if err != nil {
 		if errors.Is(err, storage.ErrBadRequest) {
