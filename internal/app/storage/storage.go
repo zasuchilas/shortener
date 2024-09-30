@@ -4,7 +4,10 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"github.com/zasuchilas/shortener/internal/app/logger"
 	"github.com/zasuchilas/shortener/internal/app/models"
+	"go.uber.org/zap"
+	"strings"
 )
 
 const (
@@ -33,6 +36,7 @@ type Storage interface {
 
 func checkUserURLs(userID int64, urlRows map[string]*models.URLRow) error {
 
+	logger.Log.Debug("checking user urls", zap.Any("urls", urlRows))
 	if urlRows == nil || len(urlRows) == 0 {
 		return fmt.Errorf("%w nothing was found for the passed short urls", ErrBadRequest)
 	}
@@ -49,7 +53,7 @@ func checkUserURLs(userID int64, urlRows map[string]*models.URLRow) error {
 		}
 	}
 	if len(forbiddenRows) > 0 {
-		return fmt.Errorf("%w you can't delete other people's short links (%v)", ErrBadRequest, forbiddenRows)
+		return fmt.Errorf("%w you can't delete other people's short links (%s)", ErrBadRequest, strings.Join(forbiddenRows, ", "))
 	}
 	if len(alreadyDeleted) == len(urlRows) {
 		return fmt.Errorf("%w all short urls have already been deleted", ErrBadRequest)

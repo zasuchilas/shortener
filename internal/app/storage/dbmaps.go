@@ -145,32 +145,17 @@ func (d *DBMaps) UserURLs(_ context.Context, userID int64) (urlRowList []*models
 }
 
 func (d *DBMaps) CheckDeletedURLs(_ context.Context, userID int64, shortURLs []string) error {
-	d.mutex.RLock()
-	found, ok := d.owners[userID]
-	d.mutex.RUnlock()
-
-	if !ok || len(found) == 0 {
-		return checkUserURLs(userID, nil)
-	}
-
-	// filtering users urls
+	// getting urls from request
 	urlRows := make(map[string]*models.URLRow)
+	d.mutex.RLock()
 	for _, shortURL := range shortURLs {
-		//idx := slices.IndexFunc(found, func(u *models.URLRow) bool {
-		//	return u.ShortURL == shortURL
-		//})
-		idx := -1
-		for i := range found {
-			if found[i].ShortURL == shortURL {
-				idx = i
-				break
-			}
+		found, ok := d.hash[shortURL]
+		if !ok {
+			continue
 		}
-		if idx > 0 {
-			f := found[idx]
-			urlRows[f.OrigURL] = f
-		}
+		urlRows[shortURL] = found
 	}
+	d.mutex.RUnlock()
 
 	return checkUserURLs(userID, urlRows)
 }

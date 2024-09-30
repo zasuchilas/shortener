@@ -311,8 +311,8 @@ func (s *Server) deleteURLsHandler(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		if errors.Is(err, storage.ErrBadRequest) {
 			w.Header().Set("Content-Type", "text/plain")
-			_, _ = w.Write([]byte(err.Error()))
 			w.WriteHeader(http.StatusBadRequest)
+			_, _ = w.Write([]byte(err.Error()))
 			return
 		}
 		w.WriteHeader(http.StatusInternalServerError)
