@@ -13,8 +13,16 @@ type FileWriter struct {
 }
 
 func NewFileWriter(filename string) (*FileWriter, error) {
+	return newFileWriter(filename, os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0666)
+}
+
+func NewFileReWriter(filename string) (*FileWriter, error) {
+	return newFileWriter(filename, os.O_WRONLY|os.O_CREATE|os.O_APPEND|os.O_TRUNC, 0666)
+}
+
+func newFileWriter(filename string, flag int, perm os.FileMode) (*FileWriter, error) {
 	logger.Log.Debug("opening file storage as file writer")
-	file, err := os.OpenFile(filename, os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0666)
+	file, err := os.OpenFile(filename, flag, perm)
 	if err != nil {
 		return nil, err
 	}

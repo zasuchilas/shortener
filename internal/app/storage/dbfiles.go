@@ -17,11 +17,12 @@ import (
 
 // DBFiles is a file storage implementation
 type DBFiles struct {
-	urls   map[string]*models.URLRow
-	hash   map[string]*models.URLRow
-	owners map[int64][]*models.URLRow
-	lastID int64
-	mutex  sync.RWMutex
+	urls     map[string]*models.URLRow
+	hash     map[string]*models.URLRow
+	owners   map[int64][]*models.URLRow
+	original []*models.URLRow
+	lastID   int64
+	mutex    sync.RWMutex
 }
 
 func NewDBFile() *DBFiles {
@@ -143,6 +144,7 @@ loop:
 			d.urls[origURL] = nextURLRow
 			d.hash[shortURL] = nextURLRow
 			d.owners[userID] = append(d.owners[userID], nextURLRow)
+			d.original = append(d.original, nextURLRow)
 			d.lastID = nextID
 
 			logger.Log.Debug("inserted new row",
@@ -186,7 +188,39 @@ func (d *DBFiles) CheckDeletedURLs(_ context.Context, userID int64, shortURLs []
 	return checkUserURLs(userID, urlRows)
 }
 
-func (d *DBFiles) DeleteURLs(ctx context.Context, shortURLs ...string) error {
+func (d *DBFiles) DeleteURLs(_ context.Context, shortURLs ...string) error {
+	d.mutex.Lock()
+	defer d.mutex.Unlock()
+
+	for _, shortURL := range shortURLs {
+
+		found, ok := d.hash[shortURL]
+		if !ok {
+			continue
+		}
+
+		found.Deleted = true
+		// since found is a pointer, the value must change in all components
+		// (url, hash, owner and original)
+	}
+
+	// rewrite file storage from original component
+	w, err := filefuncs.NewFileReWriter(config.FileStoragePath)
+	if err != nil {
+		return err
+	}
+	defer w.Close()
+
+	for _, line := range d.original {
+		logger.Log.Debug("lines", zap.Any("line", line))
+		err = w.WriteURLRow(line)
+		if err != nil {
+			break
+		}
+	}
+	if err != nil {
+		return err
+	}
 
 	return nil
 }
@@ -220,6 +254,8 @@ func (d *DBFiles) loadFromFile() (lastID int64, err error) {
 			d.owners[row.UserID] = make([]*models.URLRow, 0)
 		}
 		d.owners[row.UserID] = append(d.owners[row.UserID], row)
+
+		d.original = append(d.original, row)
 
 		lastHash = row.ShortURL
 	}
