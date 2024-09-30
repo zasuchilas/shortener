@@ -307,7 +307,7 @@ func (s *Server) deleteURLsHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// checking request data (1)
-	if shortURLs == nil || len(shortURLs) == 0 {
+	if len(shortURLs) == 0 {
 		w.Header().Set("Content-Type", "text/plain")
 		w.WriteHeader(http.StatusBadRequest)
 		_, _ = w.Write([]byte("the list of short links to delete is empty"))
