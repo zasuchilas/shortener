@@ -160,7 +160,20 @@ func (d *DBMaps) CheckDeletedURLs(_ context.Context, userID int64, shortURLs []s
 	return checkUserURLs(userID, urlRows)
 }
 
-func (d *DBMaps) DeleteURLs(ctx context.Context, shortURLs ...string) error {
+func (d *DBMaps) DeleteURLs(_ context.Context, shortURLs ...string) error {
+
+	d.mutex.Lock()
+	defer d.mutex.Unlock()
+
+	for _, shortURL := range shortURLs {
+
+		found, ok := d.hash[shortURL]
+		if !ok {
+			continue
+		}
+
+		found.Deleted = true // since found is a pointer, the value must change in all components (url, hash, owner)
+	}
 
 	return nil
 }
