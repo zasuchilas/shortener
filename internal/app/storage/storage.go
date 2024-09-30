@@ -12,11 +12,12 @@ import (
 )
 
 const (
-	InstanceMemory        = "dbmaps"
-	InstanceFile          = "dbfiles"
-	InstancePostgresql    = "dbpgsql"
-	DeletingChanBuffer    = 1024
-	DeletingFlushInterval = 10 * time.Second
+	InstanceMemory         = "dbmaps"
+	InstanceFile           = "dbfiles"
+	InstancePostgresql     = "dbpgsql"
+	DeletingChanBuffer     = 1024
+	DeletingMaxRowsRequest = 512
+	DeletingFlushInterval  = 10 * time.Second
 )
 
 var (
