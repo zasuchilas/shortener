@@ -22,15 +22,23 @@ import (
 )
 
 type Server struct {
-	store  storage.Storage
 	secure *secure.Secure
+
+	store    storage.Storage
+	deleteCh chan models.DeleteTask
 }
 
 func New(s storage.Storage, secure *secure.Secure) *Server {
-	return &Server{
-		store:  s,
+	srv := &Server{
 		secure: secure,
+		store:  s,
 	}
+
+	// batch deleting
+	srv.deleteCh = make(chan models.DeleteTask, storage.DeletingChanBuffer)
+	go srv.flushDeletingTasks()
+
+	return srv
 }
 
 func (s *Server) Start() {
@@ -319,7 +327,11 @@ func (s *Server) deleteURLsHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// TODO: add to queue
+	s.deleteCh <- models.DeleteTask{
+		Time:      time.Now(),
+		UserID:    userID,
+		ShortURLs: shortURLs,
+	}
 
 	w.WriteHeader(http.StatusAccepted)
 }
@@ -383,4 +395,37 @@ func getUserID(r *http.Request) (userID int64, err error) {
 	}
 
 	return userID, nil
+}
+
+func (s *Server) flushDeletingTasks() {
+
+	// the interval for sending data to the database
+	ticker := time.NewTicker(storage.DeletingFlushInterval)
+
+	var shortURLs []string
+	// TODO: use generator & buffer chan for limit shortURLs slice
+
+	for {
+		select {
+		case task := <-s.deleteCh:
+			shortURLs = append(shortURLs, task.ShortURLs...)
+		case <-ticker.C:
+			// if there is nothing to send, we do not send anything
+			if len(shortURLs) == 0 {
+				continue
+			}
+
+			err := s.store.DeleteURLs(context.TODO(), shortURLs...)
+			if err != nil {
+				logger.Log.Info("cannot delete urls",
+					zap.String("error", err.Error()), zap.String("shortURLs", strings.Join(shortURLs, ", ")))
+
+				// we will try to delete the data next time
+				continue
+			}
+
+			// clearing the deletion queue
+			shortURLs = nil
+		}
+	}
 }

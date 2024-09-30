@@ -1,5 +1,7 @@
 package models
 
+import "time"
+
 // URLRow is a row in file storage and postgresql storage
 type URLRow struct {
 	ID       int64  `json:"id"`
@@ -51,3 +53,10 @@ type UserURLsResponseItem struct {
 }
 
 type UserURLsResponse []UserURLsResponseItem
+
+// DeleteTask is element for batch deleting chan
+type DeleteTask struct {
+	Time      time.Time
+	UserID    int64
+	ShortURLs []string
+}

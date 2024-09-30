@@ -8,12 +8,15 @@ import (
 	"github.com/zasuchilas/shortener/internal/app/models"
 	"go.uber.org/zap"
 	"strings"
+	"time"
 )
 
 const (
-	InstanceMemory     = "dbmaps"
-	InstanceFile       = "dbfiles"
-	InstancePostgresql = "dbpgsql"
+	InstanceMemory        = "dbmaps"
+	InstanceFile          = "dbfiles"
+	InstancePostgresql    = "dbpgsql"
+	DeletingChanBuffer    = 1024
+	DeletingFlushInterval = 10 * time.Second
 )
 
 var (
@@ -32,6 +35,7 @@ type Storage interface {
 	WriteURLs(ctx context.Context, origURLs []string, userID int64) (urlRows map[string]*models.URLRow, err error)
 	UserURLs(ctx context.Context, userID int64) (urlRowList []*models.URLRow, err error)
 	CheckDeletedURLs(ctx context.Context, userID int64, shortURLs []string) error
+	DeleteURLs(ctx context.Context, shortURLs ...string) error
 }
 
 func checkUserURLs(userID int64, urlRows map[string]*models.URLRow) error {
