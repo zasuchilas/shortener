@@ -42,7 +42,7 @@ type Storage interface {
 func checkUserURLs(userID int64, urlRows map[string]*models.URLRow) error {
 
 	logger.Log.Debug("checking user urls", zap.Any("urls", urlRows))
-	if urlRows == nil || len(urlRows) == 0 {
+	if len(urlRows) == 0 {
 		return fmt.Errorf("%w nothing was found for the passed short urls", ErrBadRequest)
 	}
 
