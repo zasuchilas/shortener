@@ -404,11 +404,15 @@ func (s *Server) flushDeletingTasks() {
 
 	var shortURLs []string
 	// TODO: use generator & buffer chan for limit shortURLs slice
+	// channel for closing
+	//doneCh := make(chan struct{})
+	//defer close(doneCh)
 
 	for {
 		select {
 		case task := <-s.deleteCh:
 			shortURLs = append(shortURLs, task.ShortURLs...)
+			//inputCh := deleteGenerator(doneCh, task)
 		case <-ticker.C:
 			// if there is nothing to send, we do not send anything
 			if len(shortURLs) == 0 {
@@ -429,3 +433,22 @@ func (s *Server) flushDeletingTasks() {
 		}
 	}
 }
+
+// TODO: ... learning is good, but there is the KISS
+//func deleteGenerator(doneCh chan struct{}, task models.DeleteTask) chan string {
+//	inputCh := make(chan string)
+//
+//	go func() {
+//		defer  close(inputCh)
+//
+//		for _, shortURL := range task.ShortURLs {
+//			select {
+//			case <-doneCh:
+//				return
+//			case inputCh <- shortURL:
+//			}
+//		}
+//	}()
+//
+//	return inputCh
+//}
