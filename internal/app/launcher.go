@@ -15,10 +15,6 @@ import (
 	"syscall"
 )
 
-const (
-	logLevel = "debug"
-)
-
 type App struct {
 	AppName             string
 	AppVersion          string
@@ -45,7 +41,7 @@ func New() *App {
 }
 
 func (a *App) Run() {
-	if err := logger.Initialize(logLevel); err != nil {
+	if err := logger.Initialize(config.LogLevel); err != nil {
 		log.Fatal(err.Error())
 	}
 	logger.ServiceInfo(a.AppVersion)

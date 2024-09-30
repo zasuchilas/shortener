@@ -12,6 +12,7 @@ var (
 	DatabaseDSN     string
 	SecretKey       string
 	SecureFilePath  string
+	LogLevel        string
 )
 
 func ParseFlags() {
@@ -22,6 +23,7 @@ func ParseFlags() {
 	flag.StringVar(&DatabaseDSN, "d", "", "database connection string")
 	flag.StringVar(&SecretKey, "k", "supersecretkey", "the secret key for user tokens")
 	flag.StringVar(&SecureFilePath, "s", "./secure.db", "path to the secure data file")
+	flag.StringVar(&LogLevel, "l", "info", "logging level")
 	flag.Parse()
 
 	// using env (replace)
@@ -42,6 +44,9 @@ func ParseFlags() {
 	}
 	if envSecureFilePath := os.Getenv("SECURE_FILE_PATH"); envSecureFilePath != "" {
 		SecureFilePath = envSecureFilePath
+	}
+	if envLogLevel := os.Getenv("LOG_LEVEL"); envLogLevel != "" {
+		LogLevel = envLogLevel
 	}
 }
 

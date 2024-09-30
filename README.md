@@ -25,7 +25,7 @@ go build -o shortener
 | -f   | FILE_STORAGE_PATH | path to the data storage file             | -              | ./storage.db                                                                 |
 | -d   | DATABASE_DSN      | database connection string                | -              | host=127.0.0.1 user=shortener password=pass dbname=shortener sslmode=disable |
 
-`go run ./cmd/shortener -d "host=127.0.0.1 user=shortener password=pass dbname=shortener sslmode=disable"`
+`go run ./cmd/shortener -d "host=127.0.0.1 user=shortener password=pass dbname=shortener sslmode=disable" -l debug`
 
-`go run ./cmd/shortener -f ./storage.db`
+`go run ./cmd/shortener -f ./storage.db -l debug`
 
