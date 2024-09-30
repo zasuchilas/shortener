@@ -307,8 +307,8 @@ func selectByShortURLs(ctx context.Context, db *sql.DB, shortURLs []string) (url
 func findByShort(ctx context.Context, db *sql.DB, shortURL string) (urlRow *models.URLRow, exist bool, err error) {
 	var v models.URLRow
 	err = db.QueryRowContext(ctx,
-		"SELECT id, short, original, user_id FROM urls WHERE short = $1",
-		shortURL).Scan(&v.ID, &v.ShortURL, &v.OrigURL, &v.UserID)
+		"SELECT id, short, original, user_id, deleted FROM urls WHERE short = $1",
+		shortURL).Scan(&v.ID, &v.ShortURL, &v.OrigURL, &v.UserID, &v.Deleted)
 	switch {
 	case err == sql.ErrNoRows:
 		return nil, false, nil
