@@ -160,6 +160,11 @@ func (d *DBMaps) CheckDeletedURLs(_ context.Context, userID int64, shortURLs []s
 	return checkUserURLs(userID, urlRows)
 }
 
+func (d *DBMaps) DeleteURLs(ctx context.Context, shortURLs ...string) error {
+
+	return nil
+}
+
 func Write(st *DBMaps, id, userID int64, shortURL, origURL string) {
 	// for testing usage
 	//st.urls["http://спорт.ru/"] = "abcdefgh"

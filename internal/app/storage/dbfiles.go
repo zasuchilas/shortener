@@ -186,6 +186,11 @@ func (d *DBFiles) CheckDeletedURLs(_ context.Context, userID int64, shortURLs []
 	return checkUserURLs(userID, urlRows)
 }
 
+func (d *DBFiles) DeleteURLs(ctx context.Context, shortURLs ...string) error {
+
+	return nil
+}
+
 // TODO: as an option: use cache lib with reading from file
 
 func (d *DBFiles) loadFromFile() (lastID int64, err error) {

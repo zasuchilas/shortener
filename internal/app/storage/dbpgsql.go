@@ -11,6 +11,7 @@ import (
 	"github.com/zasuchilas/shortener/internal/app/models"
 	"github.com/zasuchilas/shortener/internal/app/utils/hashfuncs"
 	"go.uber.org/zap"
+	"strings"
 	"time"
 )
 
@@ -95,7 +96,7 @@ func (d *DBPgsql) WriteURLs(ctx context.Context, origURLs []string, userID int64
 	defer cancel()
 
 	logger.Log.Debug("start tx in postgresql storage")
-	tx, err := d.db.BeginTx(ctx, nil)
+	tx, err := d.db.BeginTx(ctxTm, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -104,7 +105,7 @@ func (d *DBPgsql) WriteURLs(ctx context.Context, origURLs []string, userID int64
 	// INSERT INTO urls (uuid, short, original) VALUES ($1, $2, $3) ... so SERIAL will break
 	// INSERT INTO urls (short, original) VALUES ($1, $2) ON CONFLICT DO NOTHING ... so urls_uuid_seq will break
 	// IT IS NECESSARY: if origURL already exists, do nothing (including not changing the urls_uuid_set counter)
-	stmt, err := tx.PrepareContext(ctx,
+	stmt, err := tx.PrepareContext(ctxTm,
 		"INSERT INTO urls (short, original, user_id) "+
 			"SELECT $1, $2, $4 "+
 			"WHERE NOT EXISTS (SELECT 1 FROM urls WHERE original = $3)")
@@ -180,6 +181,32 @@ func (d *DBPgsql) CheckDeletedURLs(ctx context.Context, userID int64, shortURLs 
 	return checkUserURLs(userID, urlRows)
 }
 
+func (d *DBPgsql) DeleteURLs(ctx context.Context, shortURLs ...string) error {
+
+	ctxTm, cancel := context.WithTimeout(ctx, 3*time.Second)
+	defer cancel()
+
+	stmt, err := d.db.PrepareContext(ctxTm, `UPDATE urls SET deleted = true WHERE short = any($1)`)
+	if err != nil {
+		logger.Log.Info("preparing stmt", zap.String("error", err.Error()))
+		return err
+	}
+	defer stmt.Close()
+
+	select {
+	case <-ctxTm.Done():
+		return fmt.Errorf("the operation was canceled")
+	default:
+		_, err = stmt.ExecContext(ctxTm, shortURLs)
+		if err != nil {
+			return err
+		}
+		logger.Log.Info("urls deleted", zap.String("shortURLs", strings.Join(shortURLs, ", ")))
+	}
+
+	return nil
+}
+
 func createTablesIfNeed(db *sql.DB) {
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
@@ -248,7 +275,6 @@ func selectByOrigURLs(ctx context.Context, db *sql.DB, origURLs []string) (urlRo
 }
 
 func selectByShortURLs(ctx context.Context, db *sql.DB, shortURLs []string) (urlRows map[string]*models.URLRow, err error) {
-
 	rows, err := db.QueryContext(ctx,
 		`SELECT id, short, original, user_id, deleted FROM urls WHERE short = any($1)`,
 		shortURLs)
