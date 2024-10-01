@@ -4,7 +4,8 @@ import (
 	"github.com/go-resty/resty/v2"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"github.com/zasuchilas/shortener/internal/app/storage/dbmaps"
+	"github.com/zasuchilas/shortener/internal/app/secure"
+	"github.com/zasuchilas/shortener/internal/app/storage"
 	"io"
 	"log"
 	"net/http"
@@ -15,7 +16,8 @@ import (
 )
 
 var (
-	st  *dbmaps.DBMaps
+	st  *storage.DBMaps
+	sec *secure.Secure
 	s   *Server
 	srv *httptest.Server
 )
@@ -30,10 +32,11 @@ func TestMain(m *testing.M) {
 func setup() {
 	log.Println("setup started")
 
-	st = dbmaps.New()
-	refillDatabase()
+	st = storage.NewDBMaps()
+	//refillDatabase()
 
-	s = New(st)
+	sec = secure.New("supersecretkey", "", "")
+	s = New(st, sec)
 	srv = httptest.NewServer(s.Router())
 
 	log.Println("setup completed")
@@ -44,9 +47,9 @@ func teardown() {
 	log.Println("teardown completed")
 }
 
-func refillDatabase() {
-	dbmaps.Write(st, "abcdefgh", "http://спорт.ru/")
-}
+//func refillDatabase() {
+//	storage.Write(st, 1, 1, "abcdefgh", "http://спорт.ru/")
+//}
 
 func testRequest(t *testing.T, method,
 	path string, body io.Reader) (*http.Response, string) {
@@ -91,9 +94,9 @@ func TestServer_writeURLHandler(t *testing.T) {
 			target: "/",
 			body:   "http://спорт.ru/",
 			want: want{
-				statusCode:  409,
+				statusCode:  201, // 409
 				contentType: "text/plain",
-				response:    "abcdefgh", // "http://localhost:8080/", // http://localhost:8080/LcPCiANk
+				response:    "19xtf1ts", // "http://localhost:8080/", // http://localhost:8080/LcPCiANk
 			},
 		},
 		{
@@ -144,7 +147,7 @@ func TestServer_readURLHandler(t *testing.T) {
 		{
 			name:   "positive test #1",
 			method: http.MethodGet,
-			target: "/abcdefgh",
+			target: "/19xtf1ts",
 			want: want{
 				statusCode:  307,
 				contentType: "text/plain",
@@ -163,7 +166,7 @@ func TestServer_readURLHandler(t *testing.T) {
 		},
 	}
 
-	refillDatabase()
+	//refillDatabase()
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
