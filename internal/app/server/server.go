@@ -298,12 +298,22 @@ func (s *Server) deleteURLsHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// decoding request
-	var shortURLs []string
+	var rawShortURLs []string
 	dec := json.NewDecoder(r.Body)
-	if err = dec.Decode(&shortURLs); err != nil {
-		logger.Log.Debug("cannot decode request JSON body", zap.String("error", err.Error()))
+	if err = dec.Decode(&rawShortURLs); err != nil {
+		logger.Log.Info("cannot decode request JSON body", zap.String("error", err.Error()))
 		w.WriteHeader(http.StatusBadRequest)
 		return
+	}
+
+	// clearing data
+	var shortURLs []string
+	for _, rawShortURL := range rawShortURLs {
+		clean := strings.TrimSpace(rawShortURL)
+		if len(clean) == 0 {
+			continue
+		}
+		shortURLs = append(shortURLs, clean)
 	}
 
 	// checking request data (1)
