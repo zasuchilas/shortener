@@ -130,7 +130,7 @@ loop:
 				break loop
 			}
 			shortURLCandidate := hashfuncs.EncodeZeroHash(nextID)
-			logger.Log.Debug("got next shortURL candidate & next id",
+			logger.Log.Info("got next shortURL candidate & next id",
 				zap.String("shortURLCandidate", shortURLCandidate), zap.Int64("id", nextID))
 
 			logger.Log.Debug("executing stmt")
@@ -213,11 +213,12 @@ func createTablesIfNeed(db *sql.DB) {
 
 	q := `CREATE TABLE IF NOT EXISTS urls (
 					id SERIAL PRIMARY KEY,
-					short VARCHAR(254) NOT NULL UNIQUE,
+					short VARCHAR(254) NOT NULL,
 					original VARCHAR(254) NOT NULL UNIQUE,
     			user_id INTEGER NOT NULL DEFAULT 0,
     			deleted BOOL NOT NULL DEFAULT false
 				);
+				CREATE INDEX IF NOT EXISTS idx_short ON urls (short);
 				CREATE INDEX IF NOT EXISTS idx_user_id ON urls (user_id);
 				CREATE INDEX IF NOT EXISTS idx_deleted ON urls (deleted);
 				`
