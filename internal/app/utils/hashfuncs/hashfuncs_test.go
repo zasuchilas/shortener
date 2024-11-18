@@ -133,3 +133,27 @@ func Test_decodeHash(t *testing.T) {
 		})
 	}
 }
+
+func BenchmarkEncodeZeroHash(b *testing.B) {
+	for i := 0; i < b.N; i++ {
+		EncodeZeroHash(1)
+	}
+}
+
+func BenchmarkDecodeZeroHash(b *testing.B) {
+	for i := 0; i < b.N; i++ {
+		_, _ = DecodeZeroHash("19xtf1u2")
+	}
+}
+
+func BenchmarkEncodeHeroHash(b *testing.B) {
+	for i := 0; i < b.N; i++ {
+		EncodeHeroHash(1)
+	}
+}
+
+func BenchmarkDecodeHeroHash(b *testing.B) {
+	for i := 0; i < b.N; i++ {
+		_, _ = DecodeHeroHash("5ighna")
+	}
+}
