@@ -7,17 +7,15 @@ import (
 	"github.com/zasuchilas/shortener/internal/app/logger"
 	"go.uber.org/zap"
 	"net/url"
-	"regexp"
 	"strings"
 )
 
-var (
-	hostRegex = regexp.MustCompile(`^[a-zA-Z0-9ЁёА-я]+[a-zA-Z0-9ЁёА-я.-]?[a-zA-Z0-9ЁёА-я]+\.[a-zA-ZЁёА-я0-9]{2,}$`)
-	// TODO: ru.спорт1abc.рф ru.спорт-1abc.рф ru.спорт.1abc.рф
-	// TODO: ru.спорт..1abc.рф ru.спорт.-1abc.рф
-)
+// ru.спорт1abc.рф ru.спорт-1abc.рф ru.спорт.1abc.рф
+// ru.спорт..1abc.рф ru.спорт.-1abc.рф
 
 func CleanURL(raw string) (string, error) {
+	// TODO: now this method is useless
+
 	// the request body may contain spaces, unlike the query string
 	raw = strings.TrimSpace(raw)
 	if len(raw) == 0 {
