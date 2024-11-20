@@ -13,6 +13,8 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
+	"go.uber.org/zap"
+
 	"github.com/zasuchilas/shortener/internal/app/config"
 	"github.com/zasuchilas/shortener/internal/app/logger"
 	"github.com/zasuchilas/shortener/internal/app/models"
@@ -20,7 +22,6 @@ import (
 	"github.com/zasuchilas/shortener/internal/app/storage"
 	"github.com/zasuchilas/shortener/internal/app/utils/compress"
 	"github.com/zasuchilas/shortener/internal/app/utils/urlfuncs"
-	"go.uber.org/zap"
 )
 
 type Server struct {

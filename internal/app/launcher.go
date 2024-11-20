@@ -2,17 +2,19 @@ package app
 
 import (
 	"context"
-	"github.com/zasuchilas/shortener/internal/app/config"
-	"github.com/zasuchilas/shortener/internal/app/logger"
-	"github.com/zasuchilas/shortener/internal/app/secure"
-	"github.com/zasuchilas/shortener/internal/app/server"
-	"github.com/zasuchilas/shortener/internal/app/storage"
-	"go.uber.org/zap"
 	"log"
 	"os"
 	"os/signal"
 	"sync"
 	"syscall"
+
+	"go.uber.org/zap"
+
+	"github.com/zasuchilas/shortener/internal/app/config"
+	"github.com/zasuchilas/shortener/internal/app/logger"
+	"github.com/zasuchilas/shortener/internal/app/secure"
+	"github.com/zasuchilas/shortener/internal/app/server"
+	"github.com/zasuchilas/shortener/internal/app/storage"
 )
 
 type App struct {

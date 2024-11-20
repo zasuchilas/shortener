@@ -4,12 +4,14 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"sync"
+	"time"
+
+	"go.uber.org/zap"
+
 	"github.com/zasuchilas/shortener/internal/app/logger"
 	"github.com/zasuchilas/shortener/internal/app/models"
 	"github.com/zasuchilas/shortener/internal/app/utils/hashfuncs"
-	"go.uber.org/zap"
-	"sync"
-	"time"
 )
 
 // DBMaps is a RAM storage on double maps

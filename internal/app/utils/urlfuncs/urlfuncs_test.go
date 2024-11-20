@@ -2,9 +2,11 @@ package urlfuncs
 
 import (
 	"errors"
-	"github.com/stretchr/testify/assert"
-	"github.com/zasuchilas/shortener/internal/app/config"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
+
+	"github.com/zasuchilas/shortener/internal/app/config"
 )
 
 func TestCleanURL(t *testing.T) {

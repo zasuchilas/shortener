@@ -3,11 +3,13 @@ package urlfuncs
 import (
 	"errors"
 	"fmt"
-	"github.com/zasuchilas/shortener/internal/app/config"
-	"github.com/zasuchilas/shortener/internal/app/logger"
-	"go.uber.org/zap"
 	"net/url"
 	"strings"
+
+	"go.uber.org/zap"
+
+	"github.com/zasuchilas/shortener/internal/app/config"
+	"github.com/zasuchilas/shortener/internal/app/logger"
 )
 
 // ru.спорт1abc.рф ru.спорт-1abc.рф ru.спорт.1abc.рф

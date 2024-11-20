@@ -1,8 +1,9 @@
 package secure
 
 import (
-	"github.com/stretchr/testify/assert"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
 func TestSecure(t *testing.T) {

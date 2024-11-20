@@ -2,9 +2,10 @@ package filefuncs
 
 import (
 	"encoding/json"
+	"os"
+
 	"github.com/zasuchilas/shortener/internal/app/logger"
 	"github.com/zasuchilas/shortener/internal/app/models"
-	"os"
 )
 
 type FileWriter struct {
