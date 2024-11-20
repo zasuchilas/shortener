@@ -5,7 +5,14 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
+	"net/http"
+	"strconv"
+	"strings"
+	"time"
+
 	"github.com/go-chi/chi/v5"
+	"github.com/go-chi/chi/v5/middleware"
 	"github.com/zasuchilas/shortener/internal/app/config"
 	"github.com/zasuchilas/shortener/internal/app/logger"
 	"github.com/zasuchilas/shortener/internal/app/models"
@@ -14,11 +21,6 @@ import (
 	"github.com/zasuchilas/shortener/internal/app/utils/compress"
 	"github.com/zasuchilas/shortener/internal/app/utils/urlfuncs"
 	"go.uber.org/zap"
-	"io"
-	"net/http"
-	"strconv"
-	"strings"
-	"time"
 )
 
 type Server struct {
@@ -50,8 +52,10 @@ func (s *Server) Router() chi.Router {
 	r := chi.NewRouter()
 
 	// middlewares
-	r.Use(logger.LoggingMiddleware) // r.Use(middleware.Logger)
+	r.Use(middleware.Logger)
+	//r.Use(logger.LoggingMiddleware)
 	r.Use(compress.GzipMiddleware)
+	r.Mount("/debug/", middleware.Profiler())
 
 	// routes
 	r.Get("/{shortURL}", s.readURLHandler)

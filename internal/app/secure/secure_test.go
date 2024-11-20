@@ -73,3 +73,24 @@ func TestPacking(t *testing.T) {
 		})
 	}
 }
+
+func BenchmarkSecure_Encrypt(b *testing.B) {
+	secure := New("supersecretkey", "", "")
+	data := []byte("1234567890")
+	b.ResetTimer()
+
+	for i := 0; i < b.N; i++ {
+		_, _, _ = secure.Encrypt(data)
+	}
+}
+
+func BenchmarkSecure_Decrypt(b *testing.B) {
+	secure := New("supersecretkey", "", "")
+	data := []byte("1234567890")
+	encrypted, nonce, _ := secure.Encrypt(data)
+	b.ResetTimer()
+
+	for i := 0; i < b.N; i++ {
+		_, _ = secure.Decrypt(encrypted, nonce)
+	}
+}
