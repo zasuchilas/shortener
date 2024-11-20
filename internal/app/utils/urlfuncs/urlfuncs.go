@@ -70,3 +70,11 @@ func EnrichURL(shortURL string) string {
 	}
 	return res
 }
+
+func EnrichURLv2(shortURL string) string {
+	res := config.BaseURL + "/" + shortURL
+	if !strings.HasPrefix(res, "http") {
+		res = "http://" + res
+	}
+	return res
+}

@@ -90,3 +90,15 @@ func TestEnrichURL(t *testing.T) {
 		})
 	}
 }
+
+func BenchmarkEnrichURL(b *testing.B) {
+	for i := 0; i < b.N; i++ {
+		_ = EnrichURL("ya.ru")
+	}
+}
+
+func BenchmarkEnrichURLv2(b *testing.B) {
+	for i := 0; i < b.N; i++ {
+		_ = EnrichURLv2("ya.ru")
+	}
+}
