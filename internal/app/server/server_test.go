@@ -1,11 +1,6 @@
 package server
 
 import (
-	"github.com/go-resty/resty/v2"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
-	"github.com/zasuchilas/shortener/internal/app/secure"
-	"github.com/zasuchilas/shortener/internal/app/storage"
 	"io"
 	"log"
 	"net/http"
@@ -13,6 +8,13 @@ import (
 	"os"
 	"strings"
 	"testing"
+
+	"github.com/go-resty/resty/v2"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+
+	"github.com/zasuchilas/shortener/internal/app/secure"
+	"github.com/zasuchilas/shortener/internal/app/storage"
 )
 
 var (

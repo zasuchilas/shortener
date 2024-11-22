@@ -3,21 +3,21 @@ package urlfuncs
 import (
 	"errors"
 	"fmt"
+	"net/url"
+	"strings"
+
+	"go.uber.org/zap"
+
 	"github.com/zasuchilas/shortener/internal/app/config"
 	"github.com/zasuchilas/shortener/internal/app/logger"
-	"go.uber.org/zap"
-	"net/url"
-	"regexp"
-	"strings"
 )
 
-var (
-	hostRegex = regexp.MustCompile(`^[a-zA-Z0-9ЁёА-я]+[a-zA-Z0-9ЁёА-я.-]?[a-zA-Z0-9ЁёА-я]+\.[a-zA-ZЁёА-я0-9]{2,}$`)
-	// TODO: ru.спорт1abc.рф ru.спорт-1abc.рф ru.спорт.1abc.рф
-	// TODO: ru.спорт..1abc.рф ru.спорт.-1abc.рф
-)
+// ru.спорт1abc.рф ru.спорт-1abc.рф ru.спорт.1abc.рф
+// ru.спорт..1abc.рф ru.спорт.-1abc.рф
 
 func CleanURL(raw string) (string, error) {
+	// TODO: now this method is useless
+
 	// the request body may contain spaces, unlike the query string
 	raw = strings.TrimSpace(raw)
 	if len(raw) == 0 {
@@ -69,6 +69,14 @@ func EnrichURL(shortURL string) string {
 	res := fmt.Sprintf("%s/%s", config.BaseURL, shortURL)
 	if !strings.HasPrefix(res, "http") {
 		res = fmt.Sprintf("http://%s", res)
+	}
+	return res
+}
+
+func EnrichURLv2(shortURL string) string {
+	res := config.BaseURL + "/" + shortURL
+	if !strings.HasPrefix(res, "http") {
+		res = "http://" + res
 	}
 	return res
 }

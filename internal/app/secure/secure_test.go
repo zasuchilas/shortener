@@ -1,8 +1,9 @@
 package secure
 
 import (
-	"github.com/stretchr/testify/assert"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
 func TestSecure(t *testing.T) {
@@ -71,5 +72,26 @@ func TestPacking(t *testing.T) {
 			assert.NoError(t, err)
 			assert.Equal(t, tt.userID, userID)
 		})
+	}
+}
+
+func BenchmarkSecure_Encrypt(b *testing.B) {
+	secure := New("supersecretkey", "", "")
+	data := []byte("1234567890")
+	b.ResetTimer()
+
+	for i := 0; i < b.N; i++ {
+		_, _, _ = secure.Encrypt(data)
+	}
+}
+
+func BenchmarkSecure_Decrypt(b *testing.B) {
+	secure := New("supersecretkey", "", "")
+	data := []byte("1234567890")
+	encrypted, nonce, _ := secure.Encrypt(data)
+	b.ResetTimer()
+
+	for i := 0; i < b.N; i++ {
+		_, _ = secure.Decrypt(encrypted, nonce)
 	}
 }

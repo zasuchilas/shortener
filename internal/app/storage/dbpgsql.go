@@ -5,14 +5,20 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"strings"
+	"time"
+
 	_ "github.com/jackc/pgx/v5/stdlib"
+	"go.uber.org/zap"
+
 	"github.com/zasuchilas/shortener/internal/app/config"
 	"github.com/zasuchilas/shortener/internal/app/logger"
 	"github.com/zasuchilas/shortener/internal/app/models"
 	"github.com/zasuchilas/shortener/internal/app/utils/hashfuncs"
-	"go.uber.org/zap"
-	"strings"
-	"time"
+)
+
+var (
+	_ IStorage = (*DBPgsql)(nil)
 )
 
 // DBPgsql is a postgresql storage implementation
@@ -90,7 +96,11 @@ func (d *DBPgsql) Ping(ctx context.Context) error {
 	return d.db.PingContext(ctx)
 }
 
-func (d *DBPgsql) WriteURLs(ctx context.Context, origURLs []string, userID int64) (urlRows map[string]*models.URLRow, err error) {
+func (d *DBPgsql) WriteURLs(
+	ctx context.Context,
+	origURLs []string,
+	userID int64,
+) (urlRows map[string]*models.URLRow, err error) {
 
 	ctxTm, cancel := context.WithTimeout(ctx, 3*time.Second)
 	defer cancel()

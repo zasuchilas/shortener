@@ -4,17 +4,21 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"github.com/zasuchilas/shortener/internal/app/logger"
-	"github.com/zasuchilas/shortener/internal/app/models"
 	"go.uber.org/zap"
 	"strings"
 	"time"
+
+	"github.com/zasuchilas/shortener/internal/app/logger"
+	"github.com/zasuchilas/shortener/internal/app/models"
 )
 
 const (
-	InstanceMemory         = "dbmaps"
-	InstanceFile           = "dbfiles"
-	InstancePostgresql     = "dbpgsql"
+	InstanceMemory     = "dbmaps"
+	InstanceFile       = "dbfiles"
+	InstancePostgresql = "dbpgsql"
+)
+
+const (
 	DeletingChanBuffer     = 1024
 	DeletingMaxRowsRequest = 512
 	DeletingFlushInterval  = 10 * time.Second
@@ -26,7 +30,7 @@ var (
 	ErrBadRequest = errors.New("bad request")
 )
 
-type Storage interface {
+type IStorage interface {
 	Stop()
 	InstanceName() string
 

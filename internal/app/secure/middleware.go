@@ -3,10 +3,12 @@ package secure
 import (
 	"context"
 	"errors"
-	"github.com/zasuchilas/shortener/internal/app/logger"
-	"go.uber.org/zap"
 	"net/http"
 	"time"
+
+	"go.uber.org/zap"
+
+	"github.com/zasuchilas/shortener/internal/app/logger"
 )
 
 type ContextKey string

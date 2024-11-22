@@ -4,15 +4,21 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"io"
+	"sync"
+	"time"
+
+	"go.uber.org/zap"
+
 	"github.com/zasuchilas/shortener/internal/app/config"
 	"github.com/zasuchilas/shortener/internal/app/logger"
 	"github.com/zasuchilas/shortener/internal/app/models"
 	"github.com/zasuchilas/shortener/internal/app/utils/filefuncs"
 	"github.com/zasuchilas/shortener/internal/app/utils/hashfuncs"
-	"go.uber.org/zap"
-	"io"
-	"sync"
-	"time"
+)
+
+var (
+	_ IStorage = (*DBFiles)(nil)
 )
 
 // DBFiles is a file storage implementation
