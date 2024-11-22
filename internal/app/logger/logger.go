@@ -38,11 +38,10 @@ func Initialize(level string) error {
 
 func ServiceInfo(appVersion string) {
 	// get app module name
+	moduleName := "-"
 	buildInfo, ok := debug.ReadBuildInfo()
-	var moduleName string
 	if !ok {
 		Log.Error("Failed to read build info")
-		moduleName = "-"
 	} else {
 		moduleName = buildInfo.Main.Path
 	}
