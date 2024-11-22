@@ -17,6 +17,10 @@ import (
 	"github.com/zasuchilas/shortener/internal/app/utils/hashfuncs"
 )
 
+var (
+	_ IStorage = (*DBPgsql)(nil)
+)
+
 // DBPgsql is a postgresql storage implementation
 type DBPgsql struct {
 	db *sql.DB

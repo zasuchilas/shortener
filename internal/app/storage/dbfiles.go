@@ -17,6 +17,10 @@ import (
 	"github.com/zasuchilas/shortener/internal/app/utils/hashfuncs"
 )
 
+var (
+	_ IStorage = (*DBFiles)(nil)
+)
+
 // DBFiles is a file storage implementation
 type DBFiles struct {
 	urls     map[string]*models.URLRow

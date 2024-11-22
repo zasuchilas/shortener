@@ -14,6 +14,10 @@ import (
 	"github.com/zasuchilas/shortener/internal/app/utils/hashfuncs"
 )
 
+var (
+	_ IStorage = (*DBMaps)(nil)
+)
+
 // DBMaps is a RAM storage on double maps
 type DBMaps struct {
 	urls   map[string]*models.URLRow
