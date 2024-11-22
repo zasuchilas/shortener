@@ -27,11 +27,11 @@ import (
 type Server struct {
 	secure *secure.Secure
 
-	store    storage.Storage
+	store    storage.IStorage
 	deleteCh chan models.DeleteTask
 }
 
-func New(s storage.Storage, secure *secure.Secure) *Server {
+func New(s storage.IStorage, secure *secure.Secure) *Server {
 	srv := &Server{
 		secure: secure,
 		store:  s,

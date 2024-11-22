@@ -24,7 +24,7 @@ type App struct {
 	ctx                 context.Context
 	waitGroup           *sync.WaitGroup
 	srv                 *server.Server
-	store               storage.Storage
+	store               storage.IStorage
 	secure              *secure.Secure
 }
 

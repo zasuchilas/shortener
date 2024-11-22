@@ -28,7 +28,7 @@ var (
 	ErrBadRequest = errors.New("bad request")
 )
 
-type Storage interface {
+type IStorage interface {
 	Stop()
 	InstanceName() string
 
