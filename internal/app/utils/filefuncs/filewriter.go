@@ -21,6 +21,19 @@ func NewFileReWriter(filename string) (*FileWriter, error) {
 	return newFileWriter(filename, os.O_WRONLY|os.O_CREATE|os.O_APPEND|os.O_TRUNC, 0666)
 }
 
+func (p *FileWriter) Close() error {
+	logger.Log.Debug("FileWriter closing")
+	return p.file.Close()
+}
+
+func (p *FileWriter) WriteURLRow(url *models.URLRow) error {
+	return p.encoder.Encode(url)
+}
+
+func (p *FileWriter) WriteUserRow(user *models.UserRow) error {
+	return p.encoder.Encode(user)
+}
+
 func newFileWriter(filename string, flag int, perm os.FileMode) (*FileWriter, error) {
 	logger.Log.Debug("opening file storage as file writer")
 	file, err := os.OpenFile(filename, flag, perm)
@@ -33,17 +46,4 @@ func newFileWriter(filename string, flag int, perm os.FileMode) (*FileWriter, er
 		file:    file,
 		encoder: json.NewEncoder(file),
 	}, nil
-}
-
-func (p *FileWriter) Close() error {
-	logger.Log.Debug("FileWriter closing")
-	return p.file.Close()
-}
-
-func (p *FileWriter) WriteURLRow(url *models.URLRow) error {
-	return p.encoder.Encode(url)
-}
-
-func (p *FileWriter) WriteUserRow(user *models.UserRow) error {
-	return p.encoder.Encode(user)
 }

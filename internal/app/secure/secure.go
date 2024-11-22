@@ -109,14 +109,47 @@ func (s *Secure) Decrypt(encrypted, nonce []byte) (decrypted []byte, err error) 
 	return decrypted, nil
 }
 
-func generateRandom(size int) ([]byte, error) {
-	// generating cryptographically strong random bytes in b
-	b := make([]byte, size)
-	_, err := rand.Read(b)
-	if err != nil {
-		return nil, err
+func (s *Secure) NewUser(_ context.Context) (userID int64, err error) {
+	// starting ~tx
+	s.mutex.Lock()
+	defer s.mutex.Unlock()
+
+	nextUserID := s.lastUserID + 1
+	userHash := hashfuncs.EncodeHeroHash(nextUserID)
+	nextUser := &models.UserRow{
+		UserID:   nextUserID,
+		UserHash: userHash,
+		UserDB:   s.storageInstanceName,
 	}
-	return b, nil
+
+	err = s.writeUserPersist(nextUser)
+	if err != nil {
+		return 0, err
+	}
+
+	s.users[nextUserID] = nextUser
+	s.lastUserID = nextUserID
+	logger.Log.Debug("inserted new user row",
+		zap.Int64("userID", nextUserID),
+		zap.String("userHash", userHash),
+		zap.String("userDB", ""))
+
+	return nextUserID, nil
+}
+
+func (s *Secure) CheckUser(_ context.Context, userID int64, userHash string) (found bool, err error) {
+	user, ok := s.users[userID]
+	if !ok {
+		return false, nil
+	}
+
+	if user.UserHash != userHash {
+		return false,
+			fmt.Errorf("checking user data: unexpected user hash (%d -> %s <> %s)",
+				userID, user.UserHash, userHash)
+	}
+
+	return true, err
 }
 
 func (s *Secure) packTokenCookieData(userID int64, nonce []byte) (hexadecimal string) {
@@ -207,34 +240,6 @@ func (s *Secure) loadFromFile() (lastUserID int64, err error) {
 	return lastUserID, nil
 }
 
-func (s *Secure) NewUser(_ context.Context) (userID int64, err error) {
-	// starting ~tx
-	s.mutex.Lock()
-	defer s.mutex.Unlock()
-
-	nextUserID := s.lastUserID + 1
-	userHash := hashfuncs.EncodeHeroHash(nextUserID)
-	nextUser := &models.UserRow{
-		UserID:   nextUserID,
-		UserHash: userHash,
-		UserDB:   s.storageInstanceName,
-	}
-
-	err = s.writeUserPersist(nextUser)
-	if err != nil {
-		return 0, err
-	}
-
-	s.users[nextUserID] = nextUser
-	s.lastUserID = nextUserID
-	logger.Log.Debug("inserted new user row",
-		zap.Int64("userID", nextUserID),
-		zap.String("userHash", userHash),
-		zap.String("userDB", ""))
-
-	return nextUserID, nil
-}
-
 func (s *Secure) writeUserPersist(user *models.UserRow) error {
 	if !s.persist {
 		return nil
@@ -249,17 +254,12 @@ func (s *Secure) writeUserPersist(user *models.UserRow) error {
 	return w.WriteUserRow(user)
 }
 
-func (s *Secure) CheckUser(_ context.Context, userID int64, userHash string) (found bool, err error) {
-	user, ok := s.users[userID]
-	if !ok {
-		return false, nil
+func generateRandom(size int) ([]byte, error) {
+	// generating cryptographically strong random bytes in b
+	b := make([]byte, size)
+	_, err := rand.Read(b)
+	if err != nil {
+		return nil, err
 	}
-
-	if user.UserHash != userHash {
-		return false,
-			fmt.Errorf("checking user data: unexpected user hash (%d -> %s <> %s)",
-				userID, user.UserHash, userHash)
-	}
-
-	return true, err
+	return b, nil
 }

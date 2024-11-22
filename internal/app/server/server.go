@@ -458,22 +458,3 @@ func (s *Server) flushDeletingTasks() {
 		}
 	}
 }
-
-// TODO: ... learning is good, but there is the KISS
-//func deleteGenerator(doneCh chan struct{}, task models.DeleteTask) chan string {
-//	inputCh := make(chan string)
-//
-//	go func() {
-//		defer  close(inputCh)
-//
-//		for _, shortURL := range task.ShortURLs {
-//			select {
-//			case <-doneCh:
-//				return
-//			case inputCh <- shortURL:
-//			}
-//		}
-//	}()
-//
-//	return inputCh
-//}
