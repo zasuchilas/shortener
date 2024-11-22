@@ -96,7 +96,11 @@ func (d *DBPgsql) Ping(ctx context.Context) error {
 	return d.db.PingContext(ctx)
 }
 
-func (d *DBPgsql) WriteURLs(ctx context.Context, origURLs []string, userID int64) (urlRows map[string]*models.URLRow, err error) {
+func (d *DBPgsql) WriteURLs(
+	ctx context.Context,
+	origURLs []string,
+	userID int64,
+) (urlRows map[string]*models.URLRow, err error) {
 
 	ctxTm, cancel := context.WithTimeout(ctx, 3*time.Second)
 	defer cancel()
