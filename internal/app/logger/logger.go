@@ -1,3 +1,4 @@
+// Package logger sets up logging in the service.
 package logger
 
 import (
@@ -9,9 +10,11 @@ import (
 )
 
 var (
+	// Log is th global variable for logging access from anywhere in the application.
 	Log = zap.NewNop()
 )
 
+// Initialize initializes logging.
 func Initialize(level string) error {
 	// parsing level
 	lvl, err := zap.ParseAtomicLevel(level)
@@ -36,6 +39,7 @@ func Initialize(level string) error {
 	return nil
 }
 
+// ServiceInfo displays general information about the service.
 func ServiceInfo(appVersion string) {
 	// get app module name
 	moduleName := "-"
@@ -54,7 +58,7 @@ func ServiceInfo(appVersion string) {
 	)
 }
 
-// ConfigInfo logs config values
+// ConfigInfo logs config values.
 func ConfigInfo() {
 	Log.Info("Current app config",
 		zap.String("ServerAddress", config.ServerAddress),

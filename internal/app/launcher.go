@@ -1,3 +1,4 @@
+// Package app builds, starts and stops the service.
 package app
 
 import (
@@ -17,6 +18,7 @@ import (
 	"github.com/zasuchilas/shortener/internal/app/storage"
 )
 
+// App contains the application components.
 type App struct {
 	AppName             string
 	AppVersion          string
@@ -28,6 +30,7 @@ type App struct {
 	secure              *secure.Secure
 }
 
+// New creates the application instance.
 func New() *App {
 	config.ParseFlags()
 
@@ -42,6 +45,7 @@ func New() *App {
 	}
 }
 
+// Run launches the application.
 func (a *App) Run() {
 	if err := logger.Initialize(config.LogLevel); err != nil {
 		log.Fatal(err.Error())
@@ -68,6 +72,7 @@ func (a *App) Run() {
 	a.waitGroup.Wait()
 }
 
+// shutdown intercepts exit signals and performs a graceful shutdown.
 func (a *App) shutdown() {
 	sigChan := make(chan os.Signal, 1)
 	signal.Notify(sigChan, syscall.SIGHUP, syscall.SIGINT, syscall.SIGTERM, syscall.SIGQUIT)
@@ -85,5 +90,4 @@ func (a *App) shutdown() {
 		logger.Log.Info("URL shortening service stopped")
 		a.waitGroup.Done()
 	}()
-
 }

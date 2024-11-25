@@ -26,6 +26,9 @@ go tool pprof -http=":9090" -top -diff_base=profiles/base.pprof profiles/result.
 goimports -local "github.com/zasuchilas/shortener" -w ./cmd/shortener/
 goimports -local "github.com/zasuchilas/shortener" -w ./internal/
 
+godoc -http=:8083
+# http://localhost:8083/pkg/github.com/zasuchilas/shortener/?m=all
+
 ```
 
 

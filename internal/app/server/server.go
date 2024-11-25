@@ -1,3 +1,4 @@
+// Package server is used to run the http server and contains handlers.
 package server
 
 import (
@@ -24,6 +25,7 @@ import (
 	"github.com/zasuchilas/shortener/internal/app/utils/urlfuncs"
 )
 
+// Server is the component structure.
 type Server struct {
 	secure *secure.Secure
 
@@ -31,6 +33,7 @@ type Server struct {
 	deleteCh chan models.DeleteTask
 }
 
+// New creates an instance of the component.
 func New(s storage.IStorage, secure *secure.Secure) *Server {
 	srv := &Server{
 		secure: secure,
@@ -44,11 +47,15 @@ func New(s storage.IStorage, secure *secure.Secure) *Server {
 	return srv
 }
 
+// Start starts http server.
 func (s *Server) Start() {
 	logger.Log.Info("Server starts", zap.String("addr", config.ServerAddress))
 	logger.Log.Fatal(http.ListenAndServe(config.ServerAddress, s.Router()).Error())
 }
 
+// Router sets the routes.
+//
+// A chi router is used: https://github.com/go-chi/chi/
 func (s *Server) Router() chi.Router {
 	r := chi.NewRouter()
 
@@ -80,8 +87,12 @@ func (s *Server) Router() chi.Router {
 	return r
 }
 
-func (s *Server) Stop() {}
+// Stop stops http server.
+func (s *Server) Stop() {
+	// TODO: implement a graceful shutdown
+}
 
+// writeURLHandler is the handler for POST /.
 func (s *Server) writeURLHandler(w http.ResponseWriter, r *http.Request) {
 
 	// getting userID from context
@@ -127,6 +138,7 @@ func (s *Server) writeURLHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+// readURLHandler is the handler for GET /{shortURL}.
 func (s *Server) readURLHandler(w http.ResponseWriter, r *http.Request) {
 
 	shortURL := chi.URLParam(r, "shortURL")
@@ -146,6 +158,7 @@ func (s *Server) readURLHandler(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusTemporaryRedirect)
 }
 
+// shortenHandler is the handler for POST /api/shorten.
 func (s *Server) shortenHandler(w http.ResponseWriter, r *http.Request) {
 
 	// getting userID from context
@@ -200,6 +213,7 @@ func (s *Server) shortenHandler(w http.ResponseWriter, r *http.Request) {
 	logger.Log.Debug("sending HTTP 201 response")
 }
 
+// shortenBatchHandler is the handler for POST /api/shorten/batch.
 func (s *Server) shortenBatchHandler(w http.ResponseWriter, r *http.Request) {
 
 	// getting userID from context
@@ -281,6 +295,7 @@ func (s *Server) shortenBatchHandler(w http.ResponseWriter, r *http.Request) {
 	logger.Log.Debug("sending HTTP 201 response")
 }
 
+// ping is the handler for GET /ping.
 func (s *Server) ping(w http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithTimeout(r.Context(), time.Second)
 	defer cancel()
@@ -293,6 +308,7 @@ func (s *Server) ping(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 }
 
+// deleteURLsHandler is the handler for DELETE /api/user/urls.
 func (s *Server) deleteURLsHandler(w http.ResponseWriter, r *http.Request) {
 
 	userID, err := getUserID(r)
@@ -361,6 +377,7 @@ func (s *Server) deleteURLsHandler(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusAccepted)
 }
 
+// userURLsHandler is the handler for GET /api/user/urls.
 func (s *Server) userURLsHandler(w http.ResponseWriter, r *http.Request) {
 
 	userID, err := getUserID(r)
@@ -401,6 +418,7 @@ func (s *Server) userURLsHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 // getUserID gets the userID from the context.
+//
 // All errors in this method are considered internal (500 InternalServerError)
 // because error 401 Unauthorized is returned earlier from middleware.
 func getUserID(r *http.Request) (userID int64, err error) {
@@ -422,6 +440,7 @@ func getUserID(r *http.Request) (userID int64, err error) {
 	return userID, nil
 }
 
+// flushDeletingTasks start batch deleting urls.
 func (s *Server) flushDeletingTasks() {
 
 	// the interval for sending data to the database

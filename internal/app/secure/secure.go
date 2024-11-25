@@ -20,6 +20,7 @@ import (
 	"github.com/zasuchilas/shortener/internal/app/utils/hashfuncs"
 )
 
+// Secure is the component structure.
 type Secure struct {
 	key32     []byte
 	aesbloc   cipher.Block
@@ -34,6 +35,7 @@ type Secure struct {
 	mutex               sync.RWMutex
 }
 
+// New creates an instance of the component.
 func New(key, storageInstanceName string, filePath string) *Secure {
 
 	// creating a 32 byte key AES for using AES-256
@@ -78,6 +80,7 @@ func New(key, storageInstanceName string, filePath string) *Secure {
 	return sec
 }
 
+// Encrypt encrypts the UserID value.
 func (s *Secure) Encrypt(src []byte) (encrypted, nonce []byte, err error) {
 
 	nonce, err = generateRandom(s.aesgcm.NonceSize())
@@ -92,11 +95,13 @@ func (s *Secure) Encrypt(src []byte) (encrypted, nonce []byte, err error) {
 	return encrypted, nonce, nil
 }
 
+// EncryptCustom encrypts src value with nonce.
 func (s *Secure) EncryptCustom(src, nonce []byte) (encrypted []byte) {
 	encrypted = s.aesgcm.Seal(nil, nonce, src, nil)
 	return encrypted
 }
 
+// Decrypt decrypts encrypted with nonce.
 func (s *Secure) Decrypt(encrypted, nonce []byte) (decrypted []byte, err error) {
 
 	// decrypting data
@@ -109,6 +114,7 @@ func (s *Secure) Decrypt(encrypted, nonce []byte) (decrypted []byte, err error) 
 	return decrypted, nil
 }
 
+// NewUser creates new user in secure storage.
 func (s *Secure) NewUser(_ context.Context) (userID int64, err error) {
 	// starting ~tx
 	s.mutex.Lock()
@@ -137,6 +143,7 @@ func (s *Secure) NewUser(_ context.Context) (userID int64, err error) {
 	return nextUserID, nil
 }
 
+// CheckUser checks user in the secure storage.
 func (s *Secure) CheckUser(_ context.Context, userID int64, userHash string) (found bool, err error) {
 	user, ok := s.users[userID]
 	if !ok {
@@ -152,6 +159,7 @@ func (s *Secure) CheckUser(_ context.Context, userID int64, userHash string) (fo
 	return true, err
 }
 
+// packTokenCookieData packs a token data for cookie.
 func (s *Secure) packTokenCookieData(userID int64, nonce []byte) (hexadecimal string) {
 
 	hashUserID := hashfuncs.EncodeHeroHash(userID)
@@ -166,6 +174,7 @@ func (s *Secure) packTokenCookieData(userID int64, nonce []byte) (hexadecimal st
 	return hex.EncodeToString(tokenBytes)
 }
 
+// unpackTokenCookieData unpacks a token data for cookie.
 func (s *Secure) unpackTokenCookieData(hexadecimal string) (userID int64, userHash string, err error) {
 
 	tokenBytes, err := hex.DecodeString(hexadecimal)
@@ -201,6 +210,7 @@ func (s *Secure) unpackTokenCookieData(hexadecimal string) (userID int64, userHa
 	return userID, userHash, nil
 }
 
+// loadFromFile load users from file storage into memory.
 func (s *Secure) loadFromFile() (lastUserID int64, err error) {
 	if !s.persist {
 		return 0, nil
@@ -240,6 +250,7 @@ func (s *Secure) loadFromFile() (lastUserID int64, err error) {
 	return lastUserID, nil
 }
 
+// writeUserPersist writes user data into secure storage file.
 func (s *Secure) writeUserPersist(user *models.UserRow) error {
 	if !s.persist {
 		return nil
@@ -254,6 +265,7 @@ func (s *Secure) writeUserPersist(user *models.UserRow) error {
 	return w.WriteUserRow(user)
 }
 
+// generateRandom generates random bytes.
 func generateRandom(size int) ([]byte, error) {
 	// generating cryptographically strong random bytes in b
 	b := make([]byte, size)

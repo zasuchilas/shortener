@@ -1,3 +1,4 @@
+// Package models is used to store service models.
 package models
 
 import "time"

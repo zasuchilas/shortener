@@ -11,13 +11,20 @@ import (
 	"github.com/zasuchilas/shortener/internal/app/logger"
 )
 
+// ContextKey is the special type for the key in the context.
 type ContextKey string
 
 const (
-	TokenCookieName             = "token"
+	// TokenCookieName contains the name of the cookie in which the access token is expected.
+	TokenCookieName = "token"
+
+	// ContextUserIDKey is value for ContextKey.
 	ContextUserIDKey ContextKey = "userID"
 )
 
+// SecureMiddleware is the middleware that checks for the presence of the token in the request cookie.
+//
+// If the token is not found in the cookie, it is created and installed.
 func (s *Secure) SecureMiddleware(h http.Handler) http.Handler {
 	sec := func(w http.ResponseWriter, r *http.Request) {
 
@@ -40,6 +47,9 @@ func (s *Secure) SecureMiddleware(h http.Handler) http.Handler {
 	return http.HandlerFunc(sec)
 }
 
+// GuardMiddleware is the middleware that checks for the presence of the token in the request cookie.
+//
+// If the token is not found in the cup, an access error is returned and processing is interrupted.
 func (s *Secure) GuardMiddleware(h http.Handler) http.Handler {
 	sec := func(w http.ResponseWriter, r *http.Request) {
 
@@ -58,6 +68,7 @@ func (s *Secure) GuardMiddleware(h http.Handler) http.Handler {
 	return http.HandlerFunc(sec)
 }
 
+// GetTokenUserID gets the UserID value from the cookie token.
 func (s *Secure) GetTokenUserID(r *http.Request) (userID int64, err error) {
 
 	token, err := r.Cookie(TokenCookieName)
@@ -90,6 +101,7 @@ func (s *Secure) GetTokenUserID(r *http.Request) (userID int64, err error) {
 	return
 }
 
+// SetTokenWithUserID sets the token with the UserID in the cookie.
 func (s *Secure) SetTokenWithUserID(ctx context.Context, w http.ResponseWriter) (userID int64, err error) {
 	userID, err = s.NewUser(ctx)
 	if err != nil {
@@ -127,6 +139,7 @@ func (s *Secure) SetTokenWithUserID(ctx context.Context, w http.ResponseWriter) 
 	return userID, nil
 }
 
+// checkTokenCookie validates the cookie value with a token.
 func checkTokenCookie(token *http.Cookie) error {
 	//if !token.Secure {
 	//	return errors.New("token cookie is not secure")

@@ -1,3 +1,4 @@
+// Package config is used to read the service startup settings.
 package config
 
 import (
@@ -6,15 +7,45 @@ import (
 )
 
 var (
-	ServerAddress   string
-	BaseURL         string
+	// ServerAddress is the address and port to run server.
+	//   localhost:8080 by default
+	ServerAddress string
+
+	// BaseURL is the address and port for include in shortURLs.
+	//   localhost:8080 by default
+	BaseURL string
+
+	// FileStoragePath is the path to the data storage file.
+	//  If you want to use it as a data store, then you need to specify the full path to the storage file,
+	//  e.g. ./storage.db (you do not need to create a file, it will be created automatically).
 	FileStoragePath string
-	DatabaseDSN     string
-	SecretKey       string
-	SecureFilePath  string
-	LogLevel        string
+
+	// DatabaseDSN is the database connection string.
+	//  If you want to use it as a data store, then you need to specify a database connection string,
+	//  e.g. host=127.0.0.1 user=shortener password=pass dbname=shortener sslmode=disable
+	DatabaseDSN string
+
+	// SecretKey is the secret key for user tokens.
+	//  supersecretkey by default
+	SecretKey string
+
+	// SecureFilePath is path to the secure data file.
+	//  ./secure.db by default
+	//
+	// This file stores users with their IDs.
+	// The latter are used to save the owner of the urls.
+	SecureFilePath string
+
+	// LogLevel is logging level in app.
+	//  info by default
+	LogLevel string
 )
 
+// ParseFlags reads the startup flags and environment variables.
+//
+// If there is an environment variable, then it is used.
+// If there is no environment variable, but there is a flag, then a flag is used.
+// If there is nothing, the default flag value is used.
 func ParseFlags() {
 	// using flags (and set default values)
 	flag.StringVar(&ServerAddress, "a", "localhost:8080", "address and port to run server")
@@ -50,11 +81,4 @@ func ParseFlags() {
 	}
 }
 
-// TODO: validate flags
-//netAddrRegex = regexp.MustCompile(`^[a-zA-Z0-9ЁёА-я.-]+\.[a-zA-ZЁёА-я0-9]{2,}:[0-9]{3,4}$`)
-//func validateNetAddr(val string) error {
-//	if !netAddrRegex.MatchString(val) {
-//		return errors.New("")
-//	}
-//	return nil
-//}
+// TODO: validate flags (net address check with regexp)

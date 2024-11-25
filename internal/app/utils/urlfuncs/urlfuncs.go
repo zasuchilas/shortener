@@ -1,3 +1,4 @@
+// Package urlfuncs helps you work with URLs.
 package urlfuncs
 
 import (
@@ -12,11 +13,12 @@ import (
 	"github.com/zasuchilas/shortener/internal/app/logger"
 )
 
-// ru.спорт1abc.рф ru.спорт-1abc.рф ru.спорт.1abc.рф
-// ru.спорт..1abc.рф ru.спорт.-1abc.рф
-
+// CleanURL checks the URL.
 func CleanURL(raw string) (string, error) {
 	// TODO: now this method is useless
+
+	// ru.спорт1abc.рф ru.спорт-1abc.рф ru.спорт.1abc.рф
+	// ru.спорт..1abc.рф ru.спорт.-1abc.рф
 
 	// the request body may contain spaces, unlike the query string
 	raw = strings.TrimSpace(raw)
@@ -65,6 +67,7 @@ func CleanURL(raw string) (string, error) {
 	return raw, nil
 }
 
+// EnrichURL enriches the URL by adding a server, port and schema.
 func EnrichURL(shortURL string) string {
 	res := fmt.Sprintf("%s/%s", config.BaseURL, shortURL)
 	if !strings.HasPrefix(res, "http") {
@@ -73,6 +76,9 @@ func EnrichURL(shortURL string) string {
 	return res
 }
 
+// EnrichURLv2 enriches the URL by adding a server, port and schema.
+//
+// This is an improved version that uses less memory.
 func EnrichURLv2(shortURL string) string {
 	res := config.BaseURL + "/" + shortURL
 	if !strings.HasPrefix(res, "http") {

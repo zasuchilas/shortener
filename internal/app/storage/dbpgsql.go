@@ -21,11 +21,12 @@ var (
 	_ IStorage = (*DBPgsql)(nil)
 )
 
-// DBPgsql is a postgresql storage implementation
+// DBPgsql is a postgresql storage implementation.
 type DBPgsql struct {
 	db *sql.DB
 }
 
+// NewDBPgsql creates an instance of the component.
 func NewDBPgsql() *DBPgsql {
 	pg, err := sql.Open("pgx", config.DatabaseDSN)
 	if err != nil {
@@ -43,16 +44,19 @@ func NewDBPgsql() *DBPgsql {
 	return db
 }
 
+// Stop stops the component.
 func (d *DBPgsql) Stop() {
 	if d.db != nil {
 		_ = d.db.Close()
 	}
 }
 
+// InstanceName returns current instance name.
 func (d *DBPgsql) InstanceName() string {
 	return InstancePostgresql
 }
 
+// WriteURL writes URL in the storage.
 func (d *DBPgsql) WriteURL(ctx context.Context, origURL string, userID int64) (shortURL string, conflict bool, err error) {
 
 	logger.Log.Debug("checking if already exist")
@@ -75,6 +79,7 @@ func (d *DBPgsql) WriteURL(ctx context.Context, origURL string, userID int64) (s
 	return urlRows[origURL].ShortURL, false, nil
 }
 
+// ReadURL reads URL from the storage.
 func (d *DBPgsql) ReadURL(ctx context.Context, shortURL string) (origURL string, err error) {
 	found, ex, err := findByShort(ctx, d.db, shortURL)
 	if err != nil {
@@ -92,10 +97,12 @@ func (d *DBPgsql) ReadURL(ctx context.Context, shortURL string) (origURL string,
 	return found.OrigURL, nil
 }
 
+// Ping pings the storage.
 func (d *DBPgsql) Ping(ctx context.Context) error {
 	return d.db.PingContext(ctx)
 }
 
+// WriteURLs writes URLs in the storage.
 func (d *DBPgsql) WriteURLs(
 	ctx context.Context,
 	origURLs []string,
@@ -171,6 +178,7 @@ loop:
 	return urlRows, nil
 }
 
+// UserURLs returns user URLs from storage.
 func (d *DBPgsql) UserURLs(ctx context.Context, userID int64) (urlRowList []*models.URLRow, err error) {
 	found, ex, err := findByUser(ctx, d.db, userID)
 	if !ex {
@@ -183,6 +191,7 @@ func (d *DBPgsql) UserURLs(ctx context.Context, userID int64) (urlRowList []*mod
 	return found, nil
 }
 
+// CheckDeletedURLs checks deleting URLs.
 func (d *DBPgsql) CheckDeletedURLs(ctx context.Context, userID int64, shortURLs []string) error {
 	urlRows, err := selectByShortURLs(ctx, d.db, shortURLs)
 	if err != nil {
@@ -191,6 +200,7 @@ func (d *DBPgsql) CheckDeletedURLs(ctx context.Context, userID int64, shortURLs 
 	return checkUserURLs(userID, urlRows)
 }
 
+// DeleteURLs deletes URLs from the storage.
 func (d *DBPgsql) DeleteURLs(ctx context.Context, shortURLs ...string) error {
 
 	ctxTm, cancel := context.WithTimeout(ctx, 3*time.Second)
