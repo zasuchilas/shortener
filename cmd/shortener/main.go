@@ -1,6 +1,8 @@
 package main
 
 import (
+	_ "net/http/pprof"
+
 	"github.com/zasuchilas/shortener/internal/app"
 )
 

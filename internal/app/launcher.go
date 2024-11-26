@@ -1,20 +1,24 @@
+// Package app builds, starts and stops the service.
 package app
 
 import (
 	"context"
-	"github.com/zasuchilas/shortener/internal/app/config"
-	"github.com/zasuchilas/shortener/internal/app/logger"
-	"github.com/zasuchilas/shortener/internal/app/secure"
-	"github.com/zasuchilas/shortener/internal/app/server"
-	"github.com/zasuchilas/shortener/internal/app/storage"
-	"go.uber.org/zap"
 	"log"
 	"os"
 	"os/signal"
 	"sync"
 	"syscall"
+
+	"go.uber.org/zap"
+
+	"github.com/zasuchilas/shortener/internal/app/config"
+	"github.com/zasuchilas/shortener/internal/app/logger"
+	"github.com/zasuchilas/shortener/internal/app/secure"
+	"github.com/zasuchilas/shortener/internal/app/server"
+	"github.com/zasuchilas/shortener/internal/app/storage"
 )
 
+// App contains the application components.
 type App struct {
 	AppName             string
 	AppVersion          string
@@ -22,10 +26,11 @@ type App struct {
 	ctx                 context.Context
 	waitGroup           *sync.WaitGroup
 	srv                 *server.Server
-	store               storage.Storage
+	store               storage.IStorage
 	secure              *secure.Secure
 }
 
+// New creates the application instance.
 func New() *App {
 	config.ParseFlags()
 
@@ -40,6 +45,7 @@ func New() *App {
 	}
 }
 
+// Run launches the application.
 func (a *App) Run() {
 	if err := logger.Initialize(config.LogLevel); err != nil {
 		log.Fatal(err.Error())
@@ -66,6 +72,7 @@ func (a *App) Run() {
 	a.waitGroup.Wait()
 }
 
+// shutdown intercepts exit signals and performs a graceful shutdown.
 func (a *App) shutdown() {
 	sigChan := make(chan os.Signal, 1)
 	signal.Notify(sigChan, syscall.SIGHUP, syscall.SIGINT, syscall.SIGTERM, syscall.SIGQUIT)
@@ -83,5 +90,4 @@ func (a *App) shutdown() {
 		logger.Log.Info("URL shortening service stopped")
 		a.waitGroup.Done()
 	}()
-
 }

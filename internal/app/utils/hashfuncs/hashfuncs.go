@@ -1,71 +1,34 @@
+// Package hashfuncs helps to work with hashes.
 package hashfuncs
 
 import (
-	"fmt"
-	"github.com/zasuchilas/shortener/internal/app/logger"
-	"go.uber.org/zap"
-	"math/rand"
 	"strconv"
 )
 
 const (
-	shortURLLength       = 8
-	attemptCount         = 10
-	zeroHash       int64 = 99999999999
-	heroHash       int64 = 333333333
+	// zeroHash contains the first number for calculating url hashes.
+	zeroHash int64 = 99999999999
+
+	// heroHash contains the first number for calculating user hashes.
+	heroHash int64 = 333333333
 )
 
-func init() {
-	// TODO: deprecated
-	//rand.Seed(time.Now().UnixNano())
-}
-
-var letterRunes = []rune("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ")
-
-func MakeRandomString(length int) string {
-	b := make([]rune, length)
-	for i := range b {
-		b[i] = letterRunes[rand.Intn(len(letterRunes))]
-	}
-	return string(b)
-}
-
-func MakeShortURLCandidate() string {
-	return MakeRandomString(shortURLLength)
-}
-
-func MakeShortURL(isExist func(string) (bool, error)) (shortURL string, err error) {
-
-	for i := 0; i < attemptCount; i++ {
-		shortURL = MakeRandomString(shortURLLength)
-
-		// check is already used
-		if found, e := isExist(shortURL); !found {
-			logger.Log.Info("error in isExist", zap.Error(e))
-			break
-		}
-		shortURL = ""
-	}
-
-	if shortURL == "" {
-		err = fmt.Errorf("failed to generate a short URL, used %d attempts", attemptCount)
-	}
-
-	return shortURL, err
-}
-
+// EncodeZeroHash calculates the URL hash for the transmitted URL id.
 func EncodeZeroHash(id int64) string {
 	return encodeHash(id, zeroHash)
 }
 
+// DecodeZeroHash calculates the URL id for the transmitted URL hash.
 func DecodeZeroHash(hash string) (id int64, err error) {
 	return decodeHash(hash, zeroHash)
 }
 
+// EncodeHeroHash calculates the user hash for the transmitted user id.
 func EncodeHeroHash(id int64) string {
 	return encodeHash(id, heroHash)
 }
 
+// DecodeHeroHash calculates the user id for the transmitted user hash.
 func DecodeHeroHash(hash string) (id int64, err error) {
 	return decodeHash(hash, heroHash)
 }

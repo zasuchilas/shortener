@@ -1,23 +1,25 @@
+// Package urlfuncs helps you work with URLs.
 package urlfuncs
 
 import (
 	"errors"
 	"fmt"
+	"net/url"
+	"strings"
+
+	"go.uber.org/zap"
+
 	"github.com/zasuchilas/shortener/internal/app/config"
 	"github.com/zasuchilas/shortener/internal/app/logger"
-	"go.uber.org/zap"
-	"net/url"
-	"regexp"
-	"strings"
 )
 
-var (
-	hostRegex = regexp.MustCompile(`^[a-zA-Z0-9ЁёА-я]+[a-zA-Z0-9ЁёА-я.-]?[a-zA-Z0-9ЁёА-я]+\.[a-zA-ZЁёА-я0-9]{2,}$`)
-	// TODO: ru.спорт1abc.рф ru.спорт-1abc.рф ru.спорт.1abc.рф
-	// TODO: ru.спорт..1abc.рф ru.спорт.-1abc.рф
-)
-
+// CleanURL checks the URL.
 func CleanURL(raw string) (string, error) {
+	// TODO: now this method is useless
+
+	// ru.спорт1abc.рф ru.спорт-1abc.рф ru.спорт.1abc.рф
+	// ru.спорт..1abc.рф ru.спорт.-1abc.рф
+
 	// the request body may contain spaces, unlike the query string
 	raw = strings.TrimSpace(raw)
 	if len(raw) == 0 {
@@ -30,6 +32,7 @@ func CleanURL(raw string) (string, error) {
 	if err != nil {
 		logger.Log.Error("url.Parse", zap.String("raw", raw), zap.Error(err))
 		//return raw, err
+		return "", err
 	}
 
 	// checking scheme
@@ -65,10 +68,22 @@ func CleanURL(raw string) (string, error) {
 	return raw, nil
 }
 
+// EnrichURL enriches the URL by adding a server, port and schema.
 func EnrichURL(shortURL string) string {
 	res := fmt.Sprintf("%s/%s", config.BaseURL, shortURL)
 	if !strings.HasPrefix(res, "http") {
 		res = fmt.Sprintf("http://%s", res)
+	}
+	return res
+}
+
+// EnrichURLv2 enriches the URL by adding a server, port and schema.
+//
+// This is an improved version that uses less memory.
+func EnrichURLv2(shortURL string) string {
+	res := config.BaseURL + "/" + shortURL
+	if !strings.HasPrefix(res, "http") {
+		res = "http://" + res
 	}
 	return res
 }
