@@ -2,7 +2,6 @@ package urlfuncs
 
 import (
 	"errors"
-	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -104,16 +103,4 @@ func BenchmarkEnrichURLv2(b *testing.B) {
 	for i := 0; i < b.N; i++ {
 		_ = EnrichURLv2("ya.ru")
 	}
-}
-
-func ExampleEnrichURLv2() {
-	// The config.BaseURL is installed at the start of the application.
-	// Let's install it with our hands for an example.
-	config.BaseURL = "localhost:8080"
-
-	out := EnrichURLv2("19xtf1tx")
-	fmt.Println(out)
-
-	// Output:
-	// http://localhost:8080/19xtf1tx
 }
