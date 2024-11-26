@@ -9,6 +9,7 @@ import (
 	"github.com/zasuchilas/shortener/internal/app/config"
 )
 
+// Variables
 var (
 	// Log is th global variable for logging access from anywhere in the application.
 	Log = zap.NewNop()

@@ -14,6 +14,7 @@ import (
 // ContextKey is the special type for the key in the context.
 type ContextKey string
 
+// Constants
 const (
 	// TokenCookieName contains the name of the cookie in which the access token is expected.
 	TokenCookieName = "token"

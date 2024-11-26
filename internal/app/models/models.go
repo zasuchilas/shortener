@@ -3,6 +3,7 @@ package models
 
 import "time"
 
+// Types
 type (
 	// URLRow is a row in file storage and postgresql storage
 	URLRow struct {

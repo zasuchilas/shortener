@@ -196,6 +196,7 @@ func (d *DBMaps) DeleteURLs(_ context.Context, shortURLs ...string) error {
 	return nil
 }
 
+// Write is for testing usage
 func Write(st *DBMaps, id, userID int64, shortURL, origURL string) {
 	// for testing usage
 	//st.urls["http://спорт.ru/"] = "abcdefgh"

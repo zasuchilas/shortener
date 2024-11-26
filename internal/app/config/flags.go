@@ -6,6 +6,7 @@ import (
 	"os"
 )
 
+// Variables
 var (
 	// ServerAddress is the address and port to run server.
 	//   localhost:8080 by default
