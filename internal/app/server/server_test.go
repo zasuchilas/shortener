@@ -351,7 +351,7 @@ func TestServer_deleteURLsHandler(t *testing.T) {
 	req1.Method = http.MethodPost
 	req1.URL = srt.URL
 	req1.SetBody("ya.ru")
-	resp1, err := req1.Send()
+	resp1, _ := req1.Send()
 
 	// wrong delete request
 	req2 := resty.New().R()
@@ -405,7 +405,7 @@ func TestServer_userURLsHandler(t *testing.T) {
 	req1.Method = http.MethodPost
 	req1.URL = srt.URL
 	req1.SetBody("ya.ru")
-	resp1, err := req1.Send()
+	resp1, _ := req1.Send()
 
 	// getting request
 	req2 := resty.New().R()
