@@ -32,6 +32,7 @@ func CleanURL(raw string) (string, error) {
 	if err != nil {
 		logger.Log.Error("url.Parse", zap.String("raw", raw), zap.Error(err))
 		//return raw, err
+		return "", err
 	}
 
 	// checking scheme
