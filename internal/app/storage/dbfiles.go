@@ -4,18 +4,24 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"io"
+	"sync"
+	"time"
+
+	"go.uber.org/zap"
+
 	"github.com/zasuchilas/shortener/internal/app/config"
 	"github.com/zasuchilas/shortener/internal/app/logger"
 	"github.com/zasuchilas/shortener/internal/app/models"
 	"github.com/zasuchilas/shortener/internal/app/utils/filefuncs"
 	"github.com/zasuchilas/shortener/internal/app/utils/hashfuncs"
-	"go.uber.org/zap"
-	"io"
-	"sync"
-	"time"
 )
 
-// DBFiles is a file storage implementation
+var (
+	_ IStorage = (*DBFiles)(nil)
+)
+
+// DBFiles is a file storage implementation.
 type DBFiles struct {
 	urls     map[string]*models.URLRow
 	hash     map[string]*models.URLRow
@@ -25,6 +31,7 @@ type DBFiles struct {
 	mutex    sync.RWMutex
 }
 
+// NewDBFile creates an instance of the component.
 func NewDBFile() *DBFiles {
 	db := &DBFiles{
 		urls:   make(map[string]*models.URLRow),
@@ -42,12 +49,15 @@ func NewDBFile() *DBFiles {
 	return db
 }
 
+// Stop stops the component.
 func (d *DBFiles) Stop() {}
 
+// InstanceName returns current instance name.
 func (d *DBFiles) InstanceName() string {
 	return InstanceFile
 }
 
+// WriteURL writes URL in the storage.
 func (d *DBFiles) WriteURL(ctx context.Context, origURL string, userID int64) (shortURL string, conflict bool, err error) {
 	// checking if already exist
 	found, ok := d.urls[origURL]
@@ -66,6 +76,7 @@ func (d *DBFiles) WriteURL(ctx context.Context, origURL string, userID int64) (s
 	return urlRows[origURL].ShortURL, false, nil
 }
 
+// ReadURL reads URL from the storage.
 func (d *DBFiles) ReadURL(_ context.Context, shortURL string) (origURL string, err error) {
 	d.mutex.RLock()
 	found, ok := d.hash[shortURL]
@@ -82,10 +93,14 @@ func (d *DBFiles) ReadURL(_ context.Context, shortURL string) (origURL string, e
 	return found.OrigURL, nil
 }
 
+// Ping pings the storage.
+//
+// Not applicable for file storage instance.
 func (d *DBFiles) Ping(_ context.Context) error {
 	return errors.New("not allowed")
 }
 
+// WriteURLs writes URLs in the storage.
 func (d *DBFiles) WriteURLs(ctx context.Context, origURLs []string, userID int64) (urlRows map[string]*models.URLRow, err error) {
 
 	urlRows = make(map[string]*models.URLRow)
@@ -159,6 +174,7 @@ loop:
 	return urlRows, nil
 }
 
+// UserURLs returns user URLs from storage.
 func (d *DBFiles) UserURLs(_ context.Context, userID int64) (urlRowList []*models.URLRow, err error) {
 
 	d.mutex.RLock()
@@ -172,6 +188,7 @@ func (d *DBFiles) UserURLs(_ context.Context, userID int64) (urlRowList []*model
 	return found, nil
 }
 
+// CheckDeletedURLs checks deleting URLs.
 func (d *DBFiles) CheckDeletedURLs(_ context.Context, userID int64, shortURLs []string) error {
 	// getting urls from request
 	urlRows := make(map[string]*models.URLRow)
@@ -188,6 +205,7 @@ func (d *DBFiles) CheckDeletedURLs(_ context.Context, userID int64, shortURLs []
 	return checkUserURLs(userID, urlRows)
 }
 
+// DeleteURLs deletes URLs from the storage.
 func (d *DBFiles) DeleteURLs(_ context.Context, shortURLs ...string) error {
 	d.mutex.Lock()
 	defer d.mutex.Unlock()
@@ -227,6 +245,7 @@ func (d *DBFiles) DeleteURLs(_ context.Context, shortURLs ...string) error {
 
 // TODO: as an option: use cache lib with reading from file
 
+// loadFromFile loads URLs from the storage.
 func (d *DBFiles) loadFromFile() (lastID int64, err error) {
 	r, err := filefuncs.NewFileReader(config.FileStoragePath)
 	if err != nil {

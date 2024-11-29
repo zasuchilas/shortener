@@ -15,6 +15,20 @@ go clean -testcache
 go run ./cmd/shortener/
 go build -o shortener
 ./shortener -a ":8033" -b ":8034"
+
+go test -bench=. ./... -benchmem
+curl -sK -v http://localhost:8080/debug/pprof/heap > profiles/base.pprof
+go tool pprof -http=":9090" profiles/base.pprof
+curl -sK -v http://localhost:8080/debug/pprof/heap > profiles/result.pprof
+go tool pprof -http=":9090" profiles/result.pprof
+go tool pprof -http=":9090" -top -diff_base=profiles/base.pprof profiles/result.pprof
+
+goimports -local "github.com/zasuchilas/shortener" -w ./cmd/shortener/
+goimports -local "github.com/zasuchilas/shortener" -w ./internal/
+
+godoc -http=:8083 -play
+# http://localhost:8083/pkg/github.com/zasuchilas/shortener/?m=all
+
 ```
 
 
@@ -28,4 +42,3 @@ go build -o shortener
 `go run ./cmd/shortener -d "host=127.0.0.1 user=shortener password=pass dbname=shortener sslmode=disable" -l debug`
 
 `go run ./cmd/shortener -f ./storage.db -l debug`
-

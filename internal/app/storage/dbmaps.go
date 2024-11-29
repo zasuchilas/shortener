@@ -4,15 +4,21 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"sync"
+	"time"
+
+	"go.uber.org/zap"
+
 	"github.com/zasuchilas/shortener/internal/app/logger"
 	"github.com/zasuchilas/shortener/internal/app/models"
 	"github.com/zasuchilas/shortener/internal/app/utils/hashfuncs"
-	"go.uber.org/zap"
-	"sync"
-	"time"
 )
 
-// DBMaps is a RAM storage on double maps
+var (
+	_ IStorage = (*DBMaps)(nil)
+)
+
+// DBMaps is a RAM storage on double maps.
 type DBMaps struct {
 	urls   map[string]*models.URLRow
 	hash   map[string]*models.URLRow
@@ -21,6 +27,7 @@ type DBMaps struct {
 	mutex  sync.RWMutex
 }
 
+// NewDBMaps creates an instance of the component.
 func NewDBMaps() *DBMaps {
 	db := &DBMaps{
 		urls:   make(map[string]*models.URLRow),
@@ -30,12 +37,15 @@ func NewDBMaps() *DBMaps {
 	return db
 }
 
+// Stop stops the component.
 func (d *DBMaps) Stop() {}
 
+// InstanceName returns current instance name.
 func (d *DBMaps) InstanceName() string {
 	return InstanceMemory
 }
 
+// WriteURL writes URL in the storage.
 func (d *DBMaps) WriteURL(ctx context.Context, origURL string, userID int64) (shortURL string, conflict bool, err error) {
 	// checking if already exist
 	found, ok := d.urls[origURL]
@@ -54,6 +64,7 @@ func (d *DBMaps) WriteURL(ctx context.Context, origURL string, userID int64) (sh
 	return urlRows[origURL].ShortURL, false, nil
 }
 
+// ReadURL reads URL from the storage.
 func (d *DBMaps) ReadURL(_ context.Context, shortURL string) (origURL string, err error) {
 	d.mutex.RLock()
 	found, ok := d.hash[shortURL]
@@ -70,10 +81,14 @@ func (d *DBMaps) ReadURL(_ context.Context, shortURL string) (origURL string, er
 	return found.OrigURL, nil
 }
 
+// Ping pings the storage.
+//
+// Not applicable for file storage instance.
 func (d *DBMaps) Ping(_ context.Context) error {
 	return errors.New("not allowed")
 }
 
+// WriteURLs writes URLs in the storage.
 func (d *DBMaps) WriteURLs(ctx context.Context, origURLs []string, userID int64) (urlRows map[string]*models.URLRow, err error) {
 
 	urlRows = make(map[string]*models.URLRow)
@@ -132,6 +147,7 @@ loop:
 	return urlRows, nil
 }
 
+// UserURLs returns user URLs from storage.
 func (d *DBMaps) UserURLs(_ context.Context, userID int64) (urlRowList []*models.URLRow, err error) {
 	d.mutex.RLock()
 	found, ok := d.owners[userID]
@@ -144,6 +160,7 @@ func (d *DBMaps) UserURLs(_ context.Context, userID int64) (urlRowList []*models
 	return found, nil
 }
 
+// CheckDeletedURLs checks deleting URLs.
 func (d *DBMaps) CheckDeletedURLs(_ context.Context, userID int64, shortURLs []string) error {
 	// getting urls from request
 	urlRows := make(map[string]*models.URLRow)
@@ -160,6 +177,7 @@ func (d *DBMaps) CheckDeletedURLs(_ context.Context, userID int64, shortURLs []s
 	return checkUserURLs(userID, urlRows)
 }
 
+// DeleteURLs deletes URLs from the storage.
 func (d *DBMaps) DeleteURLs(_ context.Context, shortURLs ...string) error {
 
 	d.mutex.Lock()
@@ -178,6 +196,7 @@ func (d *DBMaps) DeleteURLs(_ context.Context, shortURLs ...string) error {
 	return nil
 }
 
+// Write is for testing usage
 func Write(st *DBMaps, id, userID int64, shortURL, origURL string) {
 	// for testing usage
 	//st.urls["http://спорт.ru/"] = "abcdefgh"
