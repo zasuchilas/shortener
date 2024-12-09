@@ -54,7 +54,7 @@ func New(key, storageInstanceName string, filePath string) *Secure {
 		logger.Log.Fatal("creating GCM for AES-256", zap.Error(err))
 	}
 
-	persist := false
+	var persist bool
 	if filePath != "" {
 		persist = true
 	}

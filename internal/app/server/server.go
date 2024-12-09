@@ -171,8 +171,8 @@ func (s *Server) shortenHandler(w http.ResponseWriter, r *http.Request) {
 	// decoding request
 	var req models.ShortenRequest
 	dec := json.NewDecoder(r.Body)
-	if err := dec.Decode(&req); err != nil {
-		logger.Log.Debug("cannot decode request JSON body", zap.Error(err))
+	if er := dec.Decode(&req); er != nil {
+		logger.Log.Debug("cannot decode request JSON body", zap.Error(er))
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
