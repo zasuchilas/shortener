@@ -1,6 +1,26 @@
+// The staticlint application is a custom multichecker build
+// for checking the shortener project code.
+//
+// It contains all the standard static analyzers of the package
+// golang.org/x/tools/go/analysis/passes.
+// See the detailed description of the analyzers in the documentation
+// https://staticcheck.dev/docs/checks/.
+//
+// It also contains all the analyzers of the package staticcheck.io.
+// See documentation https://staticcheck.dev/docs/checks/.
+//
+// Added custom analyzer osexitcheck.
+//
+// To use:
+//
+//	go run ./cmd/staticlint/ ./...
+//	cd ./cmd/staticlint && go build -o staticlint
+//	./cmd/staticlint/staticlint ./...
+//	./cmd/staticlint/staticlint --help
 package main
 
 import (
+	"github.com/zasuchilas/shortener/cmd/staticlint/osexitcheck"
 	"golang.org/x/tools/go/analysis"
 	"golang.org/x/tools/go/analysis/multichecker"
 	"golang.org/x/tools/go/analysis/passes/appends"
@@ -64,6 +84,7 @@ func main() {
 	analyzers = append(analyzers, simpleAnalyzers()...)
 	analyzers = append(analyzers, stylecheckAnalyzers()...)
 	analyzers = append(analyzers, quickfixAnalyzers()...)
+	analyzers = append(analyzers, osexitcheck.OsExitAnalyzer)
 
 	// linting
 	multichecker.Main(
