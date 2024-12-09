@@ -7,6 +7,7 @@ import (
 	"strings"
 )
 
+// OsExitAnalyzer describes an analysis function and its options.
 var OsExitAnalyzer = &analysis.Analyzer{
 	Name: "osexit",
 	Doc:  "check for the use of a direct os.Exit call in the main function of the main package",
