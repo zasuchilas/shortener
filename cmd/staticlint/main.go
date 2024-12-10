@@ -20,6 +20,7 @@
 package main
 
 import (
+	"github.com/timakin/bodyclose/passes/bodyclose"
 	"github.com/zasuchilas/shortener/cmd/staticlint/osexitcheck"
 	"golang.org/x/tools/go/analysis"
 	"golang.org/x/tools/go/analysis/multichecker"
@@ -85,6 +86,7 @@ func main() {
 	analyzers = append(analyzers, stylecheckAnalyzers()...)
 	analyzers = append(analyzers, quickfixAnalyzers()...)
 	analyzers = append(analyzers, osexitcheck.OsExitAnalyzer)
+	analyzers = append(analyzers, customAnalyzers()...)
 
 	// linting
 	multichecker.Main(
@@ -181,4 +183,12 @@ func quickfixAnalyzers() []*analysis.Analyzer {
 		analyzers = append(analyzers, v.Analyzer)
 	}
 	return analyzers
+}
+
+// Some custom public analyzers.
+func customAnalyzers() []*analysis.Analyzer {
+	return []*analysis.Analyzer{
+		// checks whether res.Body is correctly closed https://github.com/timakin/bodyclose
+		bodyclose.Analyzer,
+	}
 }
