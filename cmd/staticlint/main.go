@@ -90,9 +90,7 @@ func main() {
 	analyzers = append(analyzers, customAnalyzers()...)
 
 	// linting
-	multichecker.Main(
-		analyzers...,
-	)
+	multichecker.Main(analyzers...)
 }
 
 // All standard analyzers from golang.org/x/tools/go/analysis/passes.
