@@ -31,15 +31,19 @@ type App struct {
 }
 
 // New creates the application instance.
-func New() *App {
-	config.ParseFlags()
+func New(buildVersion, buildDate, buildCommit string) *App {
+	// build info stdout
+	log.Printf("Build version: %s \n", buildVersion)
+	log.Printf("Build date: %s \n", buildDate)
+	log.Printf("Build commit: %s \n", buildCommit)
 
+	config.ParseFlags()
 	ctx := context.Background()
 	waitGroup := &sync.WaitGroup{}
 
 	return &App{
 		AppName:    "shortener",
-		AppVersion: "0.0.0",
+		AppVersion: buildVersion,
 		ctx:        ctx,
 		waitGroup:  waitGroup,
 	}
@@ -50,6 +54,7 @@ func (a *App) Run() {
 	if err := logger.Initialize(config.LogLevel); err != nil {
 		log.Fatal(err.Error())
 	}
+
 	logger.ServiceInfo(a.AppVersion)
 	logger.ConfigInfo()
 
