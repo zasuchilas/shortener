@@ -197,24 +197,24 @@ func (d *DBMaps) DeleteURLs(_ context.Context, shortURLs ...string) error {
 }
 
 // Write is for testing usage
-func Write(st *DBMaps, id, userID int64, shortURL, origURL string) {
-	// for testing usage
-	//st.urls["http://спорт.ru/"] = "abcdefgh"
-	//st.hash["abcdefgh"] = "http://спорт.ru/"
-
-	urlRow := &models.URLRow{
-		ID:       id,
-		ShortURL: shortURL,
-		OrigURL:  origURL,
-		UserID:   userID,
-		Deleted:  false,
-	}
-	st.urls[origURL] = urlRow
-	st.hash[shortURL] = urlRow
-
-	_, ex := st.owners[userID]
-	if !ex {
-		st.owners[userID] = make([]*models.URLRow, 0)
-	}
-	st.owners[userID] = append(st.owners[userID], urlRow)
-}
+//func Write(st *DBMaps, id, userID int64, shortURL, origURL string) {
+//	// for testing usage
+//	//st.urls["http://спорт.ru/"] = "abcdefgh"
+//	//st.hash["abcdefgh"] = "http://спорт.ru/"
+//
+//	urlRow := &models.URLRow{
+//		ID:       id,
+//		ShortURL: shortURL,
+//		OrigURL:  origURL,
+//		UserID:   userID,
+//		Deleted:  false,
+//	}
+//	st.urls[origURL] = urlRow
+//	st.hash[shortURL] = urlRow
+//
+//	_, ex := st.owners[userID]
+//	if !ex {
+//		st.owners[userID] = make([]*models.URLRow, 0)
+//	}
+//	st.owners[userID] = append(st.owners[userID], urlRow)
+//}
