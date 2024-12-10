@@ -6,6 +6,7 @@ require (
 	github.com/go-chi/chi/v5 v5.1.0
 	github.com/go-resty/resty/v2 v2.14.0
 	github.com/jackc/pgx/v5 v5.7.1
+	github.com/jingyugao/rowserrcheck v1.1.1
 	github.com/stretchr/testify v1.9.0
 	github.com/timakin/bodyclose v0.0.0-20241017074824-adbc21e6bf36
 	go.uber.org/zap v1.27.0

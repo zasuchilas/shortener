@@ -20,6 +20,7 @@
 package main
 
 import (
+	"github.com/jingyugao/rowserrcheck/passes/rowserr"
 	"github.com/timakin/bodyclose/passes/bodyclose"
 	"github.com/zasuchilas/shortener/cmd/staticlint/osexitcheck"
 	"golang.org/x/tools/go/analysis"
@@ -188,7 +189,12 @@ func quickfixAnalyzers() []*analysis.Analyzer {
 // Some custom public analyzers.
 func customAnalyzers() []*analysis.Analyzer {
 	return []*analysis.Analyzer{
-		// checks whether res.Body is correctly closed https://github.com/timakin/bodyclose
+		// checks whether res.Body is correctly closed - https://github.com/timakin/bodyclose
 		bodyclose.Analyzer,
+
+		// checks whether sql.Rows.Err is correctly checked - https://github.com/jingyugao/rowserrcheck
+		rowserr.NewAnalyzer(
+			"github.com/jmoiron/sqlx",
+		),
 	}
 }
