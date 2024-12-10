@@ -124,29 +124,15 @@ func TestSecure_NewUser(t *testing.T) {
 	k32 := sha256.Sum256([]byte(key))
 	aesbloc, _ := aes.NewCipher(k32[:])
 	aesgcm, _ := cipher.NewGCM(aesbloc)
-	f := fields{
-		key32:               []byte(key),
-		aesbloc:             aesbloc,
-		aesgcm:              aesgcm,
-		nonceSize:           aesgcm.NonceSize(),
-		persist:             false,
-		filePath:            "",
-		users:               make(map[int64]*models.UserRow),
-		lastUserID:          0,
-		storageInstanceName: "",
-		mutex:               sync.RWMutex{},
-	}
 
 	tests := []struct {
 		name       string
-		fields     fields
 		args       args
 		wantUserID int64
 		wantErr    bool
 	}{
 		{
 			name:       "nil",
-			fields:     f,
 			args:       args{in0: context.TODO()},
 			wantUserID: 1,
 			wantErr:    false,
@@ -155,16 +141,16 @@ func TestSecure_NewUser(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			s := &Secure{
-				key32:               tt.fields.key32,
-				aesbloc:             tt.fields.aesbloc,
-				aesgcm:              tt.fields.aesgcm,
-				nonceSize:           tt.fields.nonceSize,
-				persist:             tt.fields.persist,
-				filePath:            tt.fields.filePath,
-				users:               tt.fields.users,
-				lastUserID:          tt.fields.lastUserID,
-				storageInstanceName: tt.fields.storageInstanceName,
-				mutex:               tt.fields.mutex,
+				key32:               []byte(key),
+				aesbloc:             aesbloc,
+				aesgcm:              aesgcm,
+				nonceSize:           aesgcm.NonceSize(),
+				persist:             false,
+				filePath:            "",
+				users:               make(map[int64]*models.UserRow),
+				lastUserID:          0,
+				storageInstanceName: "",
+				mutex:               sync.RWMutex{},
 			}
 			gotUserID, err := s.NewUser(tt.args.in0)
 			if (err != nil) != tt.wantErr {
@@ -202,29 +188,15 @@ func TestSecure_CheckUser(t *testing.T) {
 	aesbloc, _ := aes.NewCipher(k32[:])
 	aesgcm, _ := cipher.NewGCM(aesbloc)
 	config.SecureFilePath = "./secure_test.db"
-	f := fields{
-		key32:               []byte(key),
-		aesbloc:             aesbloc,
-		aesgcm:              aesgcm,
-		nonceSize:           aesgcm.NonceSize(),
-		persist:             true,
-		filePath:            config.SecureFilePath,
-		users:               make(map[int64]*models.UserRow),
-		lastUserID:          1,
-		storageInstanceName: "",
-		mutex:               sync.RWMutex{},
-	}
 
 	tests := []struct {
 		name      string
-		fields    fields
 		args      args
 		wantFound bool
 		wantErr   bool
 	}{
 		{
-			name:   "nil",
-			fields: f,
+			name: "nil",
 			args: args{
 				in0:      context.TODO(),
 				userID:   0,
@@ -233,8 +205,7 @@ func TestSecure_CheckUser(t *testing.T) {
 			wantErr: false,
 		},
 		{
-			name:   "err",
-			fields: f,
+			name: "err",
 			args: args{
 				in0:      context.TODO(),
 				userID:   1,
@@ -246,16 +217,16 @@ func TestSecure_CheckUser(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			s := &Secure{
-				key32:               tt.fields.key32,
-				aesbloc:             tt.fields.aesbloc,
-				aesgcm:              tt.fields.aesgcm,
-				nonceSize:           tt.fields.nonceSize,
-				persist:             tt.fields.persist,
-				filePath:            tt.fields.filePath,
-				users:               tt.fields.users,
-				lastUserID:          tt.fields.lastUserID,
-				storageInstanceName: tt.fields.storageInstanceName,
-				mutex:               tt.fields.mutex,
+				key32:               []byte(key),
+				aesbloc:             aesbloc,
+				aesgcm:              aesgcm,
+				nonceSize:           aesgcm.NonceSize(),
+				persist:             true,
+				filePath:            config.SecureFilePath,
+				users:               make(map[int64]*models.UserRow),
+				lastUserID:          1,
+				storageInstanceName: "",
+				mutex:               sync.RWMutex{},
 			}
 			gotFound, err := s.CheckUser(tt.args.in0, tt.args.userID, tt.args.userHash)
 			if (err != nil) != tt.wantErr {
@@ -288,28 +259,14 @@ func TestSecure_loadFromFile(t *testing.T) {
 	aesbloc, _ := aes.NewCipher(k32[:])
 	aesgcm, _ := cipher.NewGCM(aesbloc)
 	config.SecureFilePath = "./secure_test.db"
-	f := fields{
-		key32:               []byte(key),
-		aesbloc:             aesbloc,
-		aesgcm:              aesgcm,
-		nonceSize:           aesgcm.NonceSize(),
-		persist:             true,
-		filePath:            config.SecureFilePath,
-		users:               make(map[int64]*models.UserRow),
-		lastUserID:          0,
-		storageInstanceName: "",
-		mutex:               sync.RWMutex{},
-	}
 
 	tests := []struct {
 		name           string
-		fields         fields
 		wantLastUserID int64
 		wantErr        bool
 	}{
 		{
 			name:           "nil",
-			fields:         f,
 			wantLastUserID: 0,
 			wantErr:        false,
 		},
@@ -317,16 +274,16 @@ func TestSecure_loadFromFile(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			s := &Secure{
-				key32:               tt.fields.key32,
-				aesbloc:             tt.fields.aesbloc,
-				aesgcm:              tt.fields.aesgcm,
-				nonceSize:           tt.fields.nonceSize,
-				persist:             tt.fields.persist,
-				filePath:            tt.fields.filePath,
-				users:               tt.fields.users,
-				lastUserID:          tt.fields.lastUserID,
-				storageInstanceName: tt.fields.storageInstanceName,
-				mutex:               tt.fields.mutex,
+				key32:               []byte(key),
+				aesbloc:             aesbloc,
+				aesgcm:              aesgcm,
+				nonceSize:           aesgcm.NonceSize(),
+				persist:             true,
+				filePath:            config.SecureFilePath,
+				users:               make(map[int64]*models.UserRow),
+				lastUserID:          0,
+				storageInstanceName: "",
+				mutex:               sync.RWMutex{},
 			}
 			gotLastUserID, err := s.loadFromFile()
 			if (err != nil) != tt.wantErr {
