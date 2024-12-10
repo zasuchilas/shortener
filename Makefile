@@ -2,6 +2,7 @@
 
 run:
 	@go run ./cmd/shortener/
+	# go run -ldflags "-X main.buildVersion=$(git describe --tags --abbrev=0) -X 'main.buildDate=$(date +'%Y.%m.%d %H:%M:%S')' -X main.buildCommit=$(git rev-parse HEAD)" ./cmd/shortener/
 
 run_f:
 	@go run ./cmd/shortener -f ./storage.db -l debug
@@ -40,6 +41,7 @@ test_coverage:
 
 build_shortener:
 	@cd ./cmd/shortener && go build -o shortener
+	# cd ./cmd/shortener && go build -ldflags "-X main.buildVersion=$(git describe --tags --abbrev=0) -X 'main.buildDate=$(date +'%Y.%m.%d %H:%M:%S')' -X main.buildCommit=$(git rev-parse HEAD)" -o shortener
 
 build_staticlint:
 	@cd ./cmd/staticlint && go build -o staticlint
