@@ -50,7 +50,17 @@ func New(s storage.IStorage, secure *secure.Secure) *Server {
 // Start starts http server.
 func (s *Server) Start() {
 	logger.Log.Info("Server starts", zap.String("addr", config.ServerAddress))
-	logger.Log.Fatal(http.ListenAndServe(config.ServerAddress, s.Router()).Error())
+	if !config.EnableHTTPS {
+		logger.Log.Fatal(http.ListenAndServe(config.ServerAddress, s.Router()).Error())
+	} else {
+		// creating cert.pem and key.pem
+		err := makePemFiles()
+		if err != nil {
+			logger.Log.Fatal("making pem files for TLS", zap.Error(err))
+		}
+		// running server
+		logger.Log.Fatal(http.ListenAndServeTLS(config.ServerAddress, "./cert.pem", "./key.pem", s.Router()).Error())
+	}
 }
 
 // Router sets the routes.

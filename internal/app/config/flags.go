@@ -3,7 +3,7 @@ package config
 
 import (
 	"flag"
-	"os"
+	"github.com/zasuchilas/shortener/pkg/envflags"
 )
 
 // Variables
@@ -40,6 +40,10 @@ var (
 	// LogLevel is logging level in app.
 	//  info by default
 	LogLevel string
+
+	// EnableHTTPS is enable https flag.
+	// false by default
+	EnableHTTPS bool
 )
 
 // ParseFlags reads the startup flags and environment variables.
@@ -54,32 +58,18 @@ func ParseFlags() {
 	flag.StringVar(&FileStoragePath, "f", "", "path to the data storage file")
 	flag.StringVar(&DatabaseDSN, "d", "", "database connection string")
 	flag.StringVar(&SecretKey, "k", "supersecretkey", "the secret key for user tokens")
-	flag.StringVar(&SecureFilePath, "s", "./secure.db", "path to the secure data file")
+	flag.StringVar(&SecureFilePath, "sec", "./secure.db", "path to the secure data file")
 	flag.StringVar(&LogLevel, "l", "info", "logging level")
+	flag.BoolVar(&EnableHTTPS, "s", false, "enable https")
 	flag.Parse()
 
 	// using env (replace)
-	if envServerAddr := os.Getenv("SERVER_ADDRESS"); envServerAddr != "" {
-		ServerAddress = envServerAddr
-	}
-	if envBaseURL := os.Getenv("BASE_URL"); envBaseURL != "" {
-		BaseURL = envBaseURL
-	}
-	if envFileStoragePath := os.Getenv("FILE_STORAGE_PATH"); envFileStoragePath != "" {
-		FileStoragePath = envFileStoragePath
-	}
-	if envDatabaseDSN := os.Getenv("DATABASE_DSN"); envDatabaseDSN != "" {
-		DatabaseDSN = envDatabaseDSN
-	}
-	if envSecretKey := os.Getenv("SECRET_KEY"); envSecretKey != "" {
-		SecretKey = envSecretKey
-	}
-	if envSecureFilePath := os.Getenv("SECURE_FILE_PATH"); envSecureFilePath != "" {
-		SecureFilePath = envSecureFilePath
-	}
-	if envLogLevel := os.Getenv("LOG_LEVEL"); envLogLevel != "" {
-		LogLevel = envLogLevel
-	}
+	envflags.TryUseEnvString(&ServerAddress, "SERVER_ADDRESS")
+	envflags.TryUseEnvString(&BaseURL, "BASE_URL")
+	envflags.TryUseEnvString(&FileStoragePath, "FILE_STORAGE_PATH")
+	envflags.TryUseEnvString(&DatabaseDSN, "DATABASE_DSN")
+	envflags.TryUseEnvString(&SecretKey, "SECRET_KEY")
+	envflags.TryUseEnvString(&SecureFilePath, "SECURE_FILE_PATH")
+	envflags.TryUseEnvString(&LogLevel, "LOG_LEVEL")
+	envflags.TryUseEnvBool(&EnableHTTPS, "ENABLE_HTTPS")
 }
-
-// TODO: validate flags (net address check with regexp)

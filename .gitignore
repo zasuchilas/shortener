@@ -27,3 +27,7 @@ secure*.db
 .pginit
 .pgdata
 docker-compose.yml
+
+# tls
+cert.pem
+key.pem
