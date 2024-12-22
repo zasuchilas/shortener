@@ -18,7 +18,7 @@ func TryDefaultBoolFlag(flagValue *bool, defaultValue bool) {
 	// value already set
 	// it means flag.BoolVar or ENV or config.json already changed value
 	// (because default for flag.BoolVar set false)
-	if *flagValue != false {
+	if *flagValue {
 		return
 	}
 

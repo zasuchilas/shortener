@@ -19,13 +19,13 @@ func TryConfigStringFlag(flagValue *string, configValue string) {
 func TryConfigBoolFlag(flagValue *bool, configValue bool) {
 	// value already set
 	// it means flag.BoolVar or ENV already changed value (default for flag.BoolVar is false)
-	if *flagValue != false {
+	if *flagValue {
 		return
 	}
 
 	// trying setting json config value
 	// default/untouched false may be resetting by json config
-	if configValue != false {
+	if configValue {
 		*flagValue = configValue
 	}
 }
