@@ -13,6 +13,9 @@ run_pg:
 run_pg_tls:
 	@go run ./cmd/shortener -d "host=127.0.0.1 user=shortener password=pass dbname=shortener sslmode=disable" -l debug -s
 
+run_pg_config:
+	@go run ./cmd/shortener -d "host=127.0.0.1 user=shortener password=pass dbname=shortener sslmode=disable" -l debug -c config.json
+
 # lint
 
 goimports:
