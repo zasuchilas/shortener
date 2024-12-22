@@ -17,7 +17,7 @@ type jsonConfig struct {
 	LogLevel       string `json:"log_level"`
 }
 
-func getJsonConfig(filename string) (*jsonConfig, error) {
+func getJSONConfig(filename string) (*jsonConfig, error) {
 	file, err := os.ReadFile(filename)
 	if err != nil {
 		return nil, err

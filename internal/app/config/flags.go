@@ -90,7 +90,7 @@ func ParseFlags() {
 
 	// using config file or set default values
 	if Config != "" {
-		conf, er := getJsonConfig(Config)
+		conf, er := getJSONConfig(Config)
 		if er != nil {
 			log.Panicf("error getting json config %s, error: %s", Config, er.Error())
 		}
