@@ -95,14 +95,27 @@ func ParseFlags() {
 			log.Panicf("error getting json config %s, error: %s", Config, er.Error())
 		}
 		// checking all config variables
-		envflags.TryConfigStringFlag(&ServerAddress, conf.ServerAddress, defaultServerAddress)
-		envflags.TryConfigStringFlag(&BaseURL, conf.BaseURL, defaultBaseURL)
-		envflags.TryConfigStringFlag(&FileStoragePath, conf.FileStoragePath, defaultFileStoragePath)
-		envflags.TryConfigStringFlag(&DatabaseDSN, conf.DatabaseDSN, defaultDatabaseDSN)
-		envflags.TryConfigBoolFlag(&EnableHTTPS, conf.EnableHTTPS, defaultEnableHTTPS)
+		envflags.TryConfigStringFlag(&ServerAddress, conf.ServerAddress)
+		envflags.TryConfigStringFlag(&BaseURL, conf.BaseURL)
+		envflags.TryConfigStringFlag(&FileStoragePath, conf.FileStoragePath)
+		envflags.TryConfigStringFlag(&DatabaseDSN, conf.DatabaseDSN)
+		envflags.TryConfigBoolFlag(&EnableHTTPS, conf.EnableHTTPS)
 		// additional variables
-		envflags.TryConfigStringFlag(&SecretKey, conf.SecretKey, defaultSecretKey)
-		envflags.TryConfigStringFlag(&SecureFilePath, conf.SecureFilePath, defaultSecureFilePath)
-		envflags.TryConfigStringFlag(&LogLevel, conf.LogLevel, defaultLogLevel)
+		envflags.TryConfigStringFlag(&SecretKey, conf.SecretKey)
+		envflags.TryConfigStringFlag(&SecureFilePath, conf.SecureFilePath)
+		envflags.TryConfigStringFlag(&LogLevel, conf.LogLevel)
 	}
+
+	// setting defaults
+	// checking all config variables
+	envflags.TryDefaultStringFlag(&ServerAddress, defaultServerAddress)
+	envflags.TryDefaultStringFlag(&BaseURL, defaultBaseURL)
+	envflags.TryDefaultStringFlag(&FileStoragePath, defaultFileStoragePath)
+	envflags.TryDefaultStringFlag(&DatabaseDSN, defaultDatabaseDSN)
+	envflags.TryDefaultBoolFlag(&EnableHTTPS, defaultEnableHTTPS)
+	// additional variables
+	envflags.TryDefaultStringFlag(&SecretKey, defaultSecretKey)
+	envflags.TryDefaultStringFlag(&SecureFilePath, defaultSecureFilePath)
+	envflags.TryDefaultStringFlag(&LogLevel, defaultLogLevel)
+
 }
