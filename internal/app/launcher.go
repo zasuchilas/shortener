@@ -6,7 +6,6 @@ import (
 	"log"
 	"os"
 	"os/signal"
-	"sync"
 	"syscall"
 
 	"go.uber.org/zap"
@@ -24,7 +23,6 @@ type App struct {
 	AppVersion          string
 	StorageInstanceName string
 	ctx                 context.Context
-	waitGroup           *sync.WaitGroup
 	srv                 *server.Server
 	store               storage.IStorage
 	secure              *secure.Secure
@@ -39,25 +37,23 @@ func New(buildVersion, buildDate, buildCommit string) *App {
 
 	config.ParseFlags()
 	ctx := context.Background()
-	waitGroup := &sync.WaitGroup{}
 
 	return &App{
 		AppName:    "shortener",
 		AppVersion: buildVersion,
 		ctx:        ctx,
-		waitGroup:  waitGroup,
 	}
 }
 
 // Run launches the application.
 func (a *App) Run() {
+	// logger
 	if err := logger.Initialize(config.LogLevel); err != nil {
 		log.Fatal(err.Error())
 	}
-
 	logger.ServiceInfo(a.AppVersion)
-	logger.ConfigInfo()
 
+	// storage
 	if config.DatabaseDSN != "" {
 		a.store = storage.NewDBPgsql()
 	} else if config.FileStoragePath != "" {
@@ -67,32 +63,27 @@ func (a *App) Run() {
 	}
 	a.StorageInstanceName = a.store.InstanceName()
 
+	// secure service
 	a.secure = secure.New(config.SecretKey, a.StorageInstanceName, config.SecureFilePath)
 
+	// http server
 	a.srv = server.New(a.store, a.secure)
-	a.waitGroup.Add(1)
 	go a.srv.Start()
 
-	a.shutdown()
-	a.waitGroup.Wait()
-}
-
-// shutdown intercepts exit signals and performs a graceful shutdown.
-func (a *App) shutdown() {
-	sigChan := make(chan os.Signal, 1)
-	signal.Notify(sigChan, syscall.SIGHUP, syscall.SIGINT, syscall.SIGTERM, syscall.SIGQUIT)
-
+	// graceful shutdown
+	idleConnsClosed := make(chan struct{})
+	sigint := make(chan os.Signal, 1)
+	signal.Notify(sigint, syscall.SIGINT, syscall.SIGTERM, syscall.SIGQUIT)
 	go func() {
-		sig := <-sigChan
+		sig := <-sigint
 		logger.Log.Info("The stop signal has been received", zap.String("signal", sig.String()))
-		close(sigChan)
-
-		// TODO: stop app components
-
-		// TODO: stop server
-		a.store.Stop()
-
-		logger.Log.Info("URL shortening service stopped")
-		a.waitGroup.Done()
+		a.srv.Stop()
+		close(idleConnsClosed)
 	}()
+	// blocked until the stop signal
+	<-idleConnsClosed
+	// stopping services
+	a.store.Stop()
+	// fin.
+	logger.Log.Info("URL shortening service stopped")
 }

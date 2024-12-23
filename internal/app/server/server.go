@@ -7,6 +7,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"log"
 	"net/http"
 	"strconv"
 	"strings"
@@ -27,8 +28,8 @@ import (
 
 // Server is the component structure.
 type Server struct {
-	secure *secure.Secure
-
+	server   http.Server
+	secure   *secure.Secure
 	store    storage.IStorage
 	deleteCh chan models.DeleteTask
 }
@@ -50,16 +51,38 @@ func New(s storage.IStorage, secure *secure.Secure) *Server {
 // Start starts http server.
 func (s *Server) Start() {
 	logger.Log.Info("Server starts", zap.String("addr", config.ServerAddress))
+	s.server = http.Server{
+		Addr:    config.ServerAddress,
+		Handler: s.Router(),
+	}
+	var err error
+
 	if !config.EnableHTTPS {
-		logger.Log.Fatal(http.ListenAndServe(config.ServerAddress, s.Router()).Error())
+		// running http server
+		if err = s.server.ListenAndServe(); err != http.ErrServerClosed {
+			// listener start or stop errors
+			logger.Log.Fatal("HTTP server ListenAndServe", zap.String("err", err.Error()))
+		}
 	} else {
 		// creating cert.pem and key.pem
-		err := makePemFiles()
+		err = makePemFiles()
 		if err != nil {
-			logger.Log.Fatal("making pem files for TLS", zap.Error(err))
+			logger.Log.Fatal("making pem files for TLS", zap.String("err", err.Error()))
 		}
-		// running server
-		logger.Log.Fatal(http.ListenAndServeTLS(config.ServerAddress, "./cert.pem", "./key.pem", s.Router()).Error())
+		// running https server
+		if err = s.server.ListenAndServeTLS("./cert.pem", "./key.pem"); err != http.ErrServerClosed {
+			// listener start or stop errors
+			logger.Log.Fatal("HTTPS server ListenAndServeTLS", zap.String("err", err.Error()))
+		}
+	}
+}
+
+// Stop stops http server.
+func (s *Server) Stop() {
+	// stopping the server
+	if err := s.server.Shutdown(context.Background()); err != nil {
+		// listener closing errors
+		log.Printf("HTTP server Shutdown: %v", err)
 	}
 }
 
@@ -95,11 +118,6 @@ func (s *Server) Router() chi.Router {
 	})
 
 	return r
-}
-
-// Stop stops http server.
-func (s *Server) Stop() {
-	// TODO: implement a graceful shutdown
 }
 
 // writeURLHandler is the handler for POST /.
