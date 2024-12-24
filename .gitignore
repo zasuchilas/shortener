@@ -34,4 +34,4 @@ cert.pem
 key.pem
 
 config*.json
-!config_mock.json
+!config_mock*.json
