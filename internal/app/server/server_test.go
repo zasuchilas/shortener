@@ -6,6 +6,8 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/zasuchilas/shortener/internal/app/config"
+	"github.com/zasuchilas/shortener/internal/app/secure"
+	"github.com/zasuchilas/shortener/internal/app/storage"
 	"io"
 	"log"
 	"net/http"
@@ -13,9 +15,6 @@ import (
 	"os"
 	"strings"
 	"testing"
-
-	"github.com/zasuchilas/shortener/internal/app/secure"
-	"github.com/zasuchilas/shortener/internal/app/storage"
 )
 
 var (
@@ -488,4 +487,55 @@ func TestServer_pingHandler(t *testing.T) {
 func TestGzipCompression(t *testing.T) {
 	// TODO: TestGzipCompression
 	//handler := http.HandlerFunc(GzipMiddleware(s.shortenHandler))
+}
+
+func TestServer_Start(t *testing.T) {
+	scr := secure.New("supersecretkey", "", "")
+	str := storage.NewDBMaps()
+	serv := New(str, scr)
+	//srt := httptest.NewServer(serv.Router())
+
+	//t.Run("http ok", func(t *testing.T) {
+	//	config.EnableHTTPS = false
+	//	require.NotPanics(t, func() {
+	//		serv.Start()
+	//	})
+	//})
+
+	//t.Run("https ok", func(t *testing.T) {
+	//	config.EnableHTTPS = true
+	//	require.NotPanics(t, func() {
+	//		serv.Start()
+	//	})
+	//})
+
+	t.Run("http fatal", func(t *testing.T) {
+		config.EnableHTTPS = false
+		config.ServerAddress = "-"
+		require.Panics(t, func() {
+			serv.Start()
+		})
+	})
+
+	t.Run("https fatal", func(t *testing.T) {
+		config.EnableHTTPS = true
+		config.ServerAddress = "-"
+		require.Panics(t, func() {
+			serv.Start()
+		})
+	})
+
+}
+
+func TestServer_Stop(t *testing.T) {
+	scr := secure.New("supersecretkey", "", "")
+	str := storage.NewDBMaps()
+	serv := New(str, scr)
+
+	t.Run("normal stopping", func(t *testing.T) {
+		go serv.Start()
+		require.NotPanics(t, func() {
+			serv.Stop()
+		})
+	})
 }

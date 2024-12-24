@@ -2,6 +2,7 @@ package urlfuncs
 
 import (
 	"errors"
+	"github.com/stretchr/testify/require"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -55,6 +56,11 @@ func TestCleanURL(t *testing.T) {
 			assert.Equal(t, tt.expected, actual)
 		})
 	}
+}
+
+func TestCleanURLError(t *testing.T) {
+	_, err := CleanURL("12http::///http://ya.ru")
+	require.ErrorContains(t, err, "first path segment in URL cannot contain colon")
 }
 
 func TestEnrichURL(t *testing.T) {

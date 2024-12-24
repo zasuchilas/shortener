@@ -187,7 +187,7 @@ func TestSecure_CheckUser(t *testing.T) {
 	k32 := sha256.Sum256([]byte(key))
 	aesbloc, _ := aes.NewCipher(k32[:])
 	aesgcm, _ := cipher.NewGCM(aesbloc)
-	config.SecureFilePath = "./secure_test.db"
+	config.SecureFilePath = "./secure_mock.db"
 
 	tests := []struct {
 		name      string
@@ -258,7 +258,7 @@ func TestSecure_loadFromFile(t *testing.T) {
 	k32 := sha256.Sum256([]byte(key))
 	aesbloc, _ := aes.NewCipher(k32[:])
 	aesgcm, _ := cipher.NewGCM(aesbloc)
-	config.SecureFilePath = "./secure_test.db"
+	config.SecureFilePath = "./secure_mock.db"
 
 	tests := []struct {
 		name           string

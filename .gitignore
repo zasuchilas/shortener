@@ -24,6 +24,7 @@ vendor/
 
 storage*.db
 secure*.db
+!secure_mock.db
 .pginit
 .pgdata
 docker-compose.yml
@@ -32,4 +33,5 @@ docker-compose.yml
 cert.pem
 key.pem
 
-config.json
+config*.json
+!config_mock.json

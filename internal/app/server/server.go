@@ -61,18 +61,18 @@ func (s *Server) Start() {
 		// running http server
 		if err = s.server.ListenAndServe(); err != http.ErrServerClosed {
 			// listener start or stop errors
-			logger.Log.Fatal("HTTP server ListenAndServe", zap.String("err", err.Error()))
+			logger.Log.Panic("HTTP server ListenAndServe", zap.String("err", err.Error()))
 		}
 	} else {
 		// creating cert.pem and key.pem
 		err = makePemFiles()
 		if err != nil {
-			logger.Log.Fatal("making pem files for TLS", zap.String("err", err.Error()))
+			logger.Log.Panic("making pem files for TLS", zap.String("err", err.Error()))
 		}
 		// running https server
 		if err = s.server.ListenAndServeTLS("./cert.pem", "./key.pem"); err != http.ErrServerClosed {
 			// listener start or stop errors
-			logger.Log.Fatal("HTTPS server ListenAndServeTLS", zap.String("err", err.Error()))
+			logger.Log.Panic("HTTPS server ListenAndServeTLS", zap.String("err", err.Error()))
 		}
 	}
 }
