@@ -243,6 +243,14 @@ func (d *DBFiles) DeleteURLs(_ context.Context, shortURLs ...string) error {
 	return nil
 }
 
+// Stats returns count of URLs.
+func (d *DBFiles) Stats(_ context.Context) (int, error) {
+	d.mutex.RLock()
+	defer d.mutex.RUnlock()
+
+	return len(d.urls), nil
+}
+
 // TODO: as an option: use cache lib with reading from file
 
 // loadFromFile loads URLs from the storage.

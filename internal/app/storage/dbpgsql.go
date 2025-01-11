@@ -227,6 +227,17 @@ func (d *DBPgsql) DeleteURLs(ctx context.Context, shortURLs ...string) error {
 	return nil
 }
 
+// Stats returns count of URLs.
+func (d *DBPgsql) Stats(ctx context.Context) (int, error) {
+
+	count, err := urlsCount(ctx, d.db)
+	if err != nil {
+		return 0, err
+	}
+
+	return count, nil
+}
+
 func createTablesIfNeed(db *sql.DB) {
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
@@ -337,6 +348,19 @@ func findByShort(ctx context.Context, db *sql.DB, shortURL string) (urlRow *mode
 		return nil, false, err
 	default:
 		return &v, true, nil
+	}
+}
+
+func urlsCount(ctx context.Context, db *sql.DB) (count int, err error) {
+	err = db.QueryRowContext(ctx,
+		"SELECT count(*) FROM urls").Scan(&count)
+	switch {
+	case err == sql.ErrNoRows:
+		return 0, nil
+	case err != nil:
+		return 0, err
+	default:
+		return count, nil
 	}
 }
 

@@ -196,6 +196,14 @@ func (d *DBMaps) DeleteURLs(_ context.Context, shortURLs ...string) error {
 	return nil
 }
 
+// Stats returns count of URLs.
+func (d *DBMaps) Stats(_ context.Context) (int, error) {
+	d.mutex.RLock()
+	defer d.mutex.RUnlock()
+
+	return len(d.urls), nil
+}
+
 // Write is for testing usage
 //func Write(st *DBMaps, id, userID int64, shortURL, origURL string) {
 //	// for testing usage

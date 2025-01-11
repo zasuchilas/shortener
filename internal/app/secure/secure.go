@@ -159,6 +159,14 @@ func (s *Secure) CheckUser(_ context.Context, userID int64, userHash string) (fo
 	return true, err
 }
 
+// UsersCount returns users count.
+func (s *Secure) UsersCount() int {
+	s.mutex.RLock()
+	defer s.mutex.RUnlock()
+
+	return len(s.users)
+}
+
 // packTokenCookieData packs a token data for cookie.
 func (s *Secure) packTokenCookieData(userID int64, nonce []byte) (hexadecimal string) {
 

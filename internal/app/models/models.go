@@ -68,3 +68,13 @@ type (
 		ShortURLs []string
 	}
 )
+
+// GET /api/internal/stats
+type (
+	StatsRequest struct{}
+
+	StatsResponse struct {
+		URLs  int `json:"urls"`
+		Users int `json:"users"`
+	}
+)

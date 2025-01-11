@@ -61,6 +61,9 @@ type IStorage interface {
 
 	// DeleteURLs deletes URLs from the storage.
 	DeleteURLs(ctx context.Context, shortURLs ...string) error
+
+	// Stats returns urls and users count.
+	Stats(ctx context.Context) (int, error)
 }
 
 // checkUserURLs checks whether the user has the ability to delete the url data.

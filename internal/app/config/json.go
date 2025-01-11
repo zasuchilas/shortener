@@ -15,6 +15,7 @@ type jsonConfig struct {
 	SecretKey      string `json:"secret_key"`
 	SecureFilePath string `json:"secure_file_path"`
 	LogLevel       string `json:"log_level"`
+	TrustedSubnet  string `json:"trusted_subnet"`
 }
 
 func getJSONConfig(filename string) (*jsonConfig, error) {

@@ -49,6 +49,11 @@ var (
 	EnableHTTPS        bool
 	defaultEnableHTTPS = false
 
+	// TrustedSubnet is trusted subnet.
+	// 192.168.1.0/24 (CIDR)
+	TrustedSubnet        string
+	defaultTrustedSubnet = ""
+
 	// Config is config filename.
 	Config string
 )
@@ -66,6 +71,7 @@ func ParseFlags() {
 	flag.StringVar(&FileStoragePath, "f", "", "path to the data storage file")
 	flag.StringVar(&DatabaseDSN, "d", "", "database connection string")
 	flag.BoolVar(&EnableHTTPS, "s", false, "enable https")
+	flag.StringVar(&TrustedSubnet, "t", "", "trusted subnet")
 	// getting additional flags
 	flag.StringVar(&SecretKey, "k", "", "the secret key for user tokens")
 	flag.StringVar(&SecureFilePath, "sec", "", "path to the secure data file")
@@ -83,6 +89,7 @@ func ParseFlags() {
 	envflags.TryUseEnvString(&DatabaseDSN, "DATABASE_DSN")
 	envflags.TryUseEnvBool(&EnableHTTPS, "ENABLE_HTTPS")
 	envflags.TryUseEnvString(&Config, "CONFIG")
+	envflags.TryUseEnvString(&TrustedSubnet, "TRUSTED_SUBNET")
 	// additional env
 	envflags.TryUseEnvString(&SecretKey, "SECRET_KEY")
 	envflags.TryUseEnvString(&SecureFilePath, "SECURE_FILE_PATH")
@@ -100,6 +107,7 @@ func ParseFlags() {
 		envflags.TryConfigStringFlag(&FileStoragePath, conf.FileStoragePath)
 		envflags.TryConfigStringFlag(&DatabaseDSN, conf.DatabaseDSN)
 		envflags.TryConfigBoolFlag(&EnableHTTPS, conf.EnableHTTPS)
+		envflags.TryConfigStringFlag(&TrustedSubnet, conf.TrustedSubnet)
 		// additional variables
 		envflags.TryConfigStringFlag(&SecretKey, conf.SecretKey)
 		envflags.TryConfigStringFlag(&SecureFilePath, conf.SecureFilePath)
@@ -113,6 +121,7 @@ func ParseFlags() {
 	envflags.TryDefaultStringFlag(&FileStoragePath, defaultFileStoragePath)
 	envflags.TryDefaultStringFlag(&DatabaseDSN, defaultDatabaseDSN)
 	envflags.TryDefaultBoolFlag(&EnableHTTPS, defaultEnableHTTPS)
+	envflags.TryDefaultStringFlag(&TrustedSubnet, defaultTrustedSubnet)
 	// additional variables
 	envflags.TryDefaultStringFlag(&SecretKey, defaultSecretKey)
 	envflags.TryDefaultStringFlag(&SecureFilePath, defaultSecureFilePath)

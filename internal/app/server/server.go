@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/zasuchilas/shortener/pkg/trusted"
 	"io"
 	"log"
 	"net/http"
@@ -115,6 +116,12 @@ func (s *Server) Router() chi.Router {
 		r.Post("/", s.writeURLHandler)
 		r.Post("/api/shorten", s.shortenHandler)
 		r.Post("/api/shorten/batch", s.shortenBatchHandler)
+	})
+
+	trustedSubnet := trusted.NewTrustedSubnet(config.TrustedSubnet)
+	r.Group(func(r chi.Router) {
+		r.Use(trustedSubnet.Middleware)
+		r.Get("/api/internal/stats", s.statsHandler)
 	})
 
 	return r
@@ -443,6 +450,32 @@ func (s *Server) userURLsHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	logger.Log.Debug("sending HTTP 200 response")
+}
+
+func (s *Server) statsHandler(w http.ResponseWriter, r *http.Request) {
+	var (
+		resp models.StatsResponse
+		err  error
+	)
+
+	resp.URLs, err = s.store.Stats(r.Context())
+	if err != nil {
+		logger.Log.Debug("getting urls count", zap.String("error", err.Error()))
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+
+	resp.Users = s.secure.UsersCount()
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+
+	enc := json.NewEncoder(w)
+	if err = enc.Encode(resp); err != nil {
+		logger.Log.Debug("error encoding response", zap.String("error", err.Error()))
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
 }
 
 // getUserID gets the userID from the context.
