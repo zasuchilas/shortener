@@ -1,6 +1,7 @@
 package server
 
 import (
+	"context"
 	"fmt"
 	"github.com/go-resty/resty/v2"
 	"github.com/stretchr/testify/assert"
@@ -438,6 +439,26 @@ func TestServer_userURLsHandler(t *testing.T) {
 	srt.Close()
 }
 
+func TestServer_userURLsHandlerBadUserID(t *testing.T) {
+	const url = "/api/user/urls"
+
+	scr := secure.New("supersecretkey", "", "")
+	str := storage.NewDBMaps()
+	serv := New(str, scr)
+	srt := httptest.NewServer(serv.Router())
+
+	// create URL request
+	req := resty.New().R()
+	req.Method = http.MethodPost
+	req.URL = srt.URL
+	req.SetBody("ya.ru")
+
+	resp, err := req.Send()
+	t.Log("ERR", err)
+	t.Log("RESP", resp)
+
+}
+
 func TestServer_pingHandler(t *testing.T) {
 	const url = "/ping"
 	config.FileStoragePath = "./storage_test.db"
@@ -537,5 +558,58 @@ func TestServer_Stop(t *testing.T) {
 		require.NotPanics(t, func() {
 			serv.Stop()
 		})
+	})
+}
+
+func Test_getUserID(t *testing.T) {
+	req := httptest.NewRequest(
+		http.MethodGet,
+		"/any",
+		nil,
+	)
+
+	userID := int64(1)
+	ctx := context.WithValue(req.Context(), secure.ContextUserIDKey, userID)
+	req = req.WithContext(ctx)
+
+	res, err := getUserID(req)
+	require.NoError(t, err)
+	require.Equal(t, userID, res)
+}
+
+func Test_getUserIDBadCtx(t *testing.T) {
+
+	t.Run("wrong userID (qwer)", func(t *testing.T) {
+		req := httptest.NewRequest(
+			http.MethodGet,
+			"/any",
+			nil,
+		)
+
+		userID := "qwer"
+		ctx := context.WithValue(req.Context(), secure.ContextUserIDKey, userID)
+		req = req.WithContext(ctx)
+
+		res, err := getUserID(req)
+		t.Log(err)
+		require.ErrorContains(t, err, "invalid syntax")
+		require.Equal(t, int64(0), res)
+	})
+
+	t.Run("wrong userID (0)", func(t *testing.T) {
+		req := httptest.NewRequest(
+			http.MethodGet,
+			"/any",
+			nil,
+		)
+
+		userID := 0
+		ctx := context.WithValue(req.Context(), secure.ContextUserIDKey, userID)
+		req = req.WithContext(ctx)
+
+		res, err := getUserID(req)
+		t.Log(err)
+		require.ErrorContains(t, err, "empty userID")
+		require.Equal(t, int64(0), res)
 	})
 }
