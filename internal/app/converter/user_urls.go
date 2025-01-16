@@ -2,13 +2,13 @@ package converter
 
 import (
 	"github.com/zasuchilas/shortener/internal/app/model"
-	"github.com/zasuchilas/shortener/pkg/shortener_http_api_v1"
+	"github.com/zasuchilas/shortener/pkg/shortenerhttpv1"
 )
 
-func ToHTTPFromUserURL(in []model.UserURL) []shortener_http_api_v1.UserURLsResponseItem {
-	result := make([]shortener_http_api_v1.UserURLsResponseItem, len(in))
+func ToHTTPFromUserURL(in []model.UserURL) []shortenerhttpv1.UserURLsResponseItem {
+	result := make([]shortenerhttpv1.UserURLsResponseItem, len(in))
 	for i := range in {
-		result[i] = shortener_http_api_v1.UserURLsResponseItem{
+		result[i] = shortenerhttpv1.UserURLsResponseItem{
 			ShortURL:    in[i].ShortURL,
 			OriginalURL: in[i].OriginalURL,
 		}

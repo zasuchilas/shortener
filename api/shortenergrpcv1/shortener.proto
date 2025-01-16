@@ -1,0 +1,85 @@
+syntax = "proto3";
+
+package shortenergrpcv1;
+
+import "google/protobuf/empty.proto";
+
+option go_package = "github.com/zasuchilas/shortener/pkg/shortenergrpcv1;shortenergrpcv1";
+
+service ShortenerV1 {
+  // public
+  rpc ReadURL(ReadURLRequest) returns (ReadURLResponse);
+  rpc Ping(google.protobuf.Empty) returns (google.protobuf.Empty);
+
+  // with guard (if there is no valid token returns error 401 Unauthorized)
+  rpc UserURLs(google.protobuf.Empty) returns (UserURLsResponse);
+  rpc DeleteUserURLs(DeleteUserURLsRequest) returns (google.protobuf.Empty);
+
+  // with secure cookie (if there is no valid token assigns a new token)
+  rpc WriteURL(WriteURLRequest) returns (WriteURLResponse);
+  rpc Shorten(ShortenRequest) returns (ShortenResponse);
+  rpc ShortenBatch(ShortenBatchRequest) returns (ShortenBatchResponse);
+
+  // trusted subnet
+  rpc Stats(google.protobuf.Empty) returns (StatsResponse);
+}
+
+message ReadURLRequest {
+  string short_url = 1;
+}
+
+message ReadURLResponse {
+  string orig_url = 1;
+}
+
+message UserURLsResponse {
+  message Item {
+    string short_url = 1;
+    string original_url = 2;
+  }
+
+  repeated Item user_urls = 1;
+}
+
+message DeleteUserURLsRequest {
+  repeated string short_urls = 1;
+}
+
+message WriteURLRequest {
+  string raw_url = 1;
+}
+
+message WriteURLResponse {
+  string short_url = 1;
+}
+
+message ShortenRequest {
+  string url = 1;
+}
+
+message ShortenResponse {
+  string result = 1;
+}
+
+message ShortenBatchRequest {
+  message Item {
+    string correlation_id = 1;
+    string original_url = 2;
+  }
+
+  repeated Item items = 1;
+}
+
+message ShortenBatchResponse {
+  message Item {
+    string correlation_id = 1;
+    string short_url = 2;
+  }
+
+  repeated Item items = 1;
+}
+
+message StatsResponse {
+  int64 urls = 1;
+  int64 users = 2;
+}

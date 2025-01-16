@@ -2,11 +2,11 @@ package converter
 
 import (
 	"github.com/zasuchilas/shortener/internal/app/model"
-	"github.com/zasuchilas/shortener/pkg/shortener_http_api_v1"
-	"github.com/zasuchilas/shortener/pkg/shortener_v1"
+	"github.com/zasuchilas/shortener/pkg/shortenergrpcv1"
+	"github.com/zasuchilas/shortener/pkg/shortenerhttpv1"
 )
 
-func ToShortenBatchInFromHTTP(in []shortener_http_api_v1.ShortenBatchRequestItem) []model.ShortenBatchIn {
+func ToShortenBatchInFromHTTP(in []shortenerhttpv1.ShortenBatchRequestItem) []model.ShortenBatchIn {
 	result := make([]model.ShortenBatchIn, len(in))
 	for i := range in {
 		result[i] = model.ShortenBatchIn{
@@ -17,10 +17,10 @@ func ToShortenBatchInFromHTTP(in []shortener_http_api_v1.ShortenBatchRequestItem
 	return result
 }
 
-func ToHTTPFromShortenBatchOut(in []model.ShortenBatchOut) []shortener_http_api_v1.ShortenBatchResponseItem {
-	result := make([]shortener_http_api_v1.ShortenBatchResponseItem, len(in))
+func ToHTTPFromShortenBatchOut(in []model.ShortenBatchOut) []shortenerhttpv1.ShortenBatchResponseItem {
+	result := make([]shortenerhttpv1.ShortenBatchResponseItem, len(in))
 	for i := range in {
-		result[i] = shortener_http_api_v1.ShortenBatchResponseItem{
+		result[i] = shortenerhttpv1.ShortenBatchResponseItem{
 			CorrelationID: in[i].CorrelationID,
 			ShortURL:      in[i].ShortURL,
 		}
@@ -28,7 +28,7 @@ func ToHTTPFromShortenBatchOut(in []model.ShortenBatchOut) []shortener_http_api_
 	return result
 }
 
-func ToShortenBatchInFromGRPC(in *shortener_v1.ShortenBatchRequest) []model.ShortenBatchIn {
+func ToShortenBatchInFromGRPC(in *shortenergrpcv1.ShortenBatchRequest) []model.ShortenBatchIn {
 	result := make([]model.ShortenBatchIn, len(in.Items))
 	for i := range in.Items {
 		result[i] = model.ShortenBatchIn{
@@ -39,10 +39,10 @@ func ToShortenBatchInFromGRPC(in *shortener_v1.ShortenBatchRequest) []model.Shor
 	return result
 }
 
-func ToGRPCFromShortenBatchOut(in []model.ShortenBatchOut) *shortener_v1.ShortenBatchResponse {
-	result := shortener_v1.ShortenBatchResponse{}
+func ToGRPCFromShortenBatchOut(in []model.ShortenBatchOut) *shortenergrpcv1.ShortenBatchResponse {
+	result := shortenergrpcv1.ShortenBatchResponse{}
 	for i := range in {
-		result.Items[i] = &shortener_v1.ShortenBatchResponse_Item{
+		result.Items[i] = &shortenergrpcv1.ShortenBatchResponse_Item{
 			CorrelationId: in[i].CorrelationID,
 			ShortUrl:      in[i].ShortURL,
 		}

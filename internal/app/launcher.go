@@ -10,9 +10,9 @@ import (
 
 	"go.uber.org/zap"
 
-	"github.com/zasuchilas/shortener/internal/app/api/http_api"
-	"github.com/zasuchilas/shortener/internal/app/grpc_server"
-	"github.com/zasuchilas/shortener/internal/app/http_server"
+	"github.com/zasuchilas/shortener/internal/app/api/httpapi"
+	"github.com/zasuchilas/shortener/internal/app/grpcserver"
+	"github.com/zasuchilas/shortener/internal/app/httpserver"
 	"github.com/zasuchilas/shortener/internal/app/repository"
 	"github.com/zasuchilas/shortener/internal/app/service/shortener"
 
@@ -28,8 +28,8 @@ type App struct {
 	StorageInstanceName string
 	ctx                 context.Context
 	secure              *secure.Secure
-	httpServer          *http_server.Server
-	grpcServer          *grpc_server.Server
+	httpServer          *httpserver.Server
+	grpcServer          *grpcserver.Server
 	shortenerRepo       repository.IStorage
 }
 
@@ -68,11 +68,11 @@ func (a *App) Run() {
 	shortenerService := shortener.NewService(a.shortenerRepo, a.secure)
 
 	// http server
-	a.httpServer = http_server.NewServer(http_api.NewImplementation(shortenerService), a.secure)
+	a.httpServer = httpserver.NewServer(httpapi.NewImplementation(shortenerService), a.secure)
 	go a.httpServer.Run()
 
 	// grpc server
-	a.grpcServer = grpc_server.NewServer(shortenerService)
+	a.grpcServer = grpcserver.NewServer(shortenerService)
 	go a.grpcServer.Run()
 
 	// graceful shutdown

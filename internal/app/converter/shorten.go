@@ -1,11 +1,11 @@
 package converter
 
 import (
-	"github.com/zasuchilas/shortener/pkg/shortener_http_api_v1"
+	"github.com/zasuchilas/shortener/pkg/shortenerhttpv1"
 )
 
-func ToHTTPShortenFromURL(readyURL string) shortener_http_api_v1.ShortenResponse {
-	return shortener_http_api_v1.ShortenResponse{
+func ToHTTPShortenFromURL(readyURL string) shortenerhttpv1.ShortenResponse {
+	return shortenerhttpv1.ShortenResponse{
 		Result: readyURL,
 	}
 }
