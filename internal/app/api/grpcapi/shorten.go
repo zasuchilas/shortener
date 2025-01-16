@@ -17,7 +17,7 @@ func (i *Implementation) Shorten(ctx context.Context, in *desc.ShortenRequest) (
 	}
 
 	if conflict {
-		return nil, status.Error(codes.AlreadyExists, err.Error())
+		return nil, status.Error(codes.AlreadyExists, "conflict")
 	}
 
 	return &desc.ShortenResponse{Result: readyURL}, nil
