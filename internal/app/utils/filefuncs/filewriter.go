@@ -5,7 +5,7 @@ import (
 	"os"
 
 	"github.com/zasuchilas/shortener/internal/app/logger"
-	"github.com/zasuchilas/shortener/internal/app/models"
+	"github.com/zasuchilas/shortener/internal/app/model"
 )
 
 // FileWriter is the structure for writing json strings in a storage file.
@@ -31,12 +31,12 @@ func (p *FileWriter) Close() error {
 }
 
 // WriteURLRow writes the URL string in the storage file.
-func (p *FileWriter) WriteURLRow(url *models.URLRow) error {
+func (p *FileWriter) WriteURLRow(url *model.URLRow) error {
 	return p.encoder.Encode(url)
 }
 
 // WriteUserRow writes the user string in the storage file.
-func (p *FileWriter) WriteUserRow(user *models.UserRow) error {
+func (p *FileWriter) WriteUserRow(user *model.UserRow) error {
 	return p.encoder.Encode(user)
 }
 

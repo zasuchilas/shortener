@@ -1,22 +1,24 @@
 package config
 
 import (
-	"github.com/stretchr/testify/require"
 	"testing"
+
+	"github.com/stretchr/testify/require"
 )
 
 func TestGetJSONConfig(t *testing.T) {
 	filename := "./mocks/config_mock.json"
 
 	exp := jsonConfig{
-		ServerAddress:   "localhost:33333",
-		BaseURL:         ":33335",
-		FileStoragePath: "./storage_example.db",
-		DatabaseDSN:     "host=127.0.0.1 user=shortener password=password dbname=shortener sslmode=disable",
-		EnableHTTPS:     false,
-		SecretKey:       "supersecretkey",
-		SecureFilePath:  "./secure_example.db",
-		LogLevel:        "debug",
+		ServerAddress:     "localhost:33333",
+		GRPCServerAddress: "localhost:33336",
+		BaseURL:           ":33335",
+		FileStoragePath:   "./storage_example.db",
+		DatabaseDSN:       "host=127.0.0.1 user=shortener password=password dbname=shortener sslmode=disable",
+		EnableHTTPS:       false,
+		SecretKey:         "supersecretkey",
+		SecureFilePath:    "./secure_example.db",
+		LogLevel:          "debug",
 	}
 
 	res, err := getJSONConfig(filename)

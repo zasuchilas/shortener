@@ -12,10 +12,11 @@ import (
 	"io"
 	"sync"
 
+	"github.com/zasuchilas/shortener/internal/app/model"
+
 	"go.uber.org/zap"
 
 	"github.com/zasuchilas/shortener/internal/app/logger"
-	"github.com/zasuchilas/shortener/internal/app/models"
 	"github.com/zasuchilas/shortener/internal/app/utils/filefuncs"
 	"github.com/zasuchilas/shortener/internal/app/utils/hashfuncs"
 )
@@ -29,7 +30,7 @@ type Secure struct {
 
 	persist             bool
 	filePath            string
-	users               map[int64]*models.UserRow
+	users               map[int64]*model.UserRow
 	lastUserID          int64
 	storageInstanceName string
 	mutex               sync.RWMutex
@@ -66,7 +67,7 @@ func New(key, storageInstanceName string, filePath string) *Secure {
 		nonceSize:           aesgcm.NonceSize(),
 		persist:             persist,
 		filePath:            filePath,
-		users:               make(map[int64]*models.UserRow),
+		users:               make(map[int64]*model.UserRow),
 		storageInstanceName: storageInstanceName,
 		mutex:               sync.RWMutex{},
 	}
@@ -122,7 +123,7 @@ func (s *Secure) NewUser(_ context.Context) (userID int64, err error) {
 
 	nextUserID := s.lastUserID + 1
 	userHash := hashfuncs.EncodeHeroHash(nextUserID)
-	nextUser := &models.UserRow{
+	nextUser := &model.UserRow{
 		UserID:   nextUserID,
 		UserHash: userHash,
 		UserDB:   s.storageInstanceName,
@@ -259,7 +260,7 @@ func (s *Secure) loadFromFile() (lastUserID int64, err error) {
 }
 
 // writeUserPersist writes user data into secure storage file.
-func (s *Secure) writeUserPersist(user *models.UserRow) error {
+func (s *Secure) writeUserPersist(user *model.UserRow) error {
 	if !s.persist {
 		return nil
 	}

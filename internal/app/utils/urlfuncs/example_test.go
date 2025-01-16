@@ -2,6 +2,7 @@ package urlfuncs
 
 import (
 	"fmt"
+
 	"github.com/zasuchilas/shortener/internal/app/config"
 )
 

@@ -6,11 +6,12 @@ import (
 )
 
 type jsonConfig struct {
-	ServerAddress   string `json:"server_address"`
-	BaseURL         string `json:"base_url"`
-	FileStoragePath string `json:"file_storage_path"`
-	DatabaseDSN     string `json:"database_dsn"`
-	EnableHTTPS     bool   `json:"enable_https"`
+	ServerAddress     string `json:"server_address"`
+	GRPCServerAddress string `json:"grpc_server_address"`
+	BaseURL           string `json:"base_url"`
+	FileStoragePath   string `json:"file_storage_path"`
+	DatabaseDSN       string `json:"database_dsn"`
+	EnableHTTPS       bool   `json:"enable_https"`
 
 	SecretKey      string `json:"secret_key"`
 	SecureFilePath string `json:"secure_file_path"`

@@ -4,8 +4,9 @@ import (
 	"encoding/json"
 	"os"
 
+	"github.com/zasuchilas/shortener/internal/app/model"
+
 	"github.com/zasuchilas/shortener/internal/app/logger"
-	"github.com/zasuchilas/shortener/internal/app/models"
 )
 
 // FileReader is the structure for reading json strings from a storage file.
@@ -36,8 +37,8 @@ func (c *FileReader) Close() error {
 }
 
 // ReadURLRow reads the URL string from the storage file.
-func (c *FileReader) ReadURLRow() (*models.URLRow, error) {
-	ur := &models.URLRow{}
+func (c *FileReader) ReadURLRow() (*model.URLRow, error) {
+	ur := &model.URLRow{}
 	if err := c.decoder.Decode(ur); err != nil {
 		return nil, err
 	}
@@ -45,8 +46,8 @@ func (c *FileReader) ReadURLRow() (*models.URLRow, error) {
 }
 
 // ReadUserRow reads the user string from the storage file.
-func (c *FileReader) ReadUserRow() (*models.UserRow, error) {
-	ur := &models.UserRow{}
+func (c *FileReader) ReadUserRow() (*model.UserRow, error) {
+	ur := &model.UserRow{}
 	if err := c.decoder.Decode(ur); err != nil {
 		return nil, err
 	}

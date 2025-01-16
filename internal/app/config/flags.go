@@ -3,8 +3,9 @@ package config
 
 import (
 	"flag"
-	"github.com/zasuchilas/shortener/pkg/envflags"
 	"log"
+
+	"github.com/zasuchilas/shortener/pkg/envflags"
 )
 
 // Variables
@@ -12,6 +13,10 @@ var (
 	// ServerAddress is the address and port to run server.
 	ServerAddress        string
 	defaultServerAddress = "localhost:8080"
+
+	// GRPCServerAddress is the address and port to run gRPC server.
+	GRPCServerAddress        string
+	defaultGRPCServerAddress = "localhost:9080"
 
 	// BaseURL is the address and port for include in shortURLs.
 	BaseURL        string
@@ -66,7 +71,8 @@ var (
 // If there is nothing, the default flag value is used.
 func ParseFlags() {
 	// getting basic flags
-	flag.StringVar(&ServerAddress, "a", "", "address and port to run server")
+	flag.StringVar(&ServerAddress, "a", "", "address and port to run http server")
+	flag.StringVar(&GRPCServerAddress, "g", "", "address and port to run grpc server")
 	flag.StringVar(&BaseURL, "b", "", "address and port for include in shortURLs")
 	flag.StringVar(&FileStoragePath, "f", "", "path to the data storage file")
 	flag.StringVar(&DatabaseDSN, "d", "", "database connection string")
@@ -84,6 +90,7 @@ func ParseFlags() {
 
 	// replacing from env
 	envflags.TryUseEnvString(&ServerAddress, "SERVER_ADDRESS")
+	envflags.TryUseEnvString(&GRPCServerAddress, "GRPC_SERVER_ADDRESS")
 	envflags.TryUseEnvString(&BaseURL, "BASE_URL")
 	envflags.TryUseEnvString(&FileStoragePath, "FILE_STORAGE_PATH")
 	envflags.TryUseEnvString(&DatabaseDSN, "DATABASE_DSN")
@@ -103,6 +110,7 @@ func ParseFlags() {
 		}
 		// checking all config variables
 		envflags.TryConfigStringFlag(&ServerAddress, conf.ServerAddress)
+		envflags.TryConfigStringFlag(&GRPCServerAddress, conf.GRPCServerAddress)
 		envflags.TryConfigStringFlag(&BaseURL, conf.BaseURL)
 		envflags.TryConfigStringFlag(&FileStoragePath, conf.FileStoragePath)
 		envflags.TryConfigStringFlag(&DatabaseDSN, conf.DatabaseDSN)
@@ -117,6 +125,7 @@ func ParseFlags() {
 	// setting defaults
 	// checking all config variables
 	envflags.TryDefaultStringFlag(&ServerAddress, defaultServerAddress)
+	envflags.TryDefaultStringFlag(&GRPCServerAddress, defaultGRPCServerAddress)
 	envflags.TryDefaultStringFlag(&BaseURL, defaultBaseURL)
 	envflags.TryDefaultStringFlag(&FileStoragePath, defaultFileStoragePath)
 	envflags.TryDefaultStringFlag(&DatabaseDSN, defaultDatabaseDSN)

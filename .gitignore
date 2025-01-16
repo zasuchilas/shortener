@@ -35,3 +35,6 @@ key.pem
 
 config*.json
 !config_mock*.json
+
+bin
+/vendor.protogen/

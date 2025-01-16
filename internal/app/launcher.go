@@ -10,11 +10,15 @@ import (
 
 	"go.uber.org/zap"
 
+	"github.com/zasuchilas/shortener/internal/app/api/http_api"
+	"github.com/zasuchilas/shortener/internal/app/grpc_server"
+	"github.com/zasuchilas/shortener/internal/app/http_server"
+	"github.com/zasuchilas/shortener/internal/app/repository"
+	"github.com/zasuchilas/shortener/internal/app/service/shortener"
+
 	"github.com/zasuchilas/shortener/internal/app/config"
 	"github.com/zasuchilas/shortener/internal/app/logger"
 	"github.com/zasuchilas/shortener/internal/app/secure"
-	"github.com/zasuchilas/shortener/internal/app/server"
-	"github.com/zasuchilas/shortener/internal/app/storage"
 )
 
 // App contains the application components.
@@ -23,9 +27,10 @@ type App struct {
 	AppVersion          string
 	StorageInstanceName string
 	ctx                 context.Context
-	srv                 *server.Server
-	store               storage.IStorage
 	secure              *secure.Secure
+	httpServer          *http_server.Server
+	grpcServer          *grpc_server.Server
+	shortenerRepo       repository.IStorage
 }
 
 // New creates the application instance.
@@ -53,37 +58,52 @@ func (a *App) Run() {
 	}
 	logger.ServiceInfo(a.AppVersion)
 
-	// storage
-	if config.DatabaseDSN != "" {
-		a.store = storage.NewDBPgsql()
-	} else if config.FileStoragePath != "" {
-		a.store = storage.NewDBFile()
-	} else {
-		a.store = storage.NewDBMaps()
-	}
-	a.StorageInstanceName = a.store.InstanceName()
+	// repository
+	a.initRepository()
 
 	// secure service
 	a.secure = secure.New(config.SecretKey, a.StorageInstanceName, config.SecureFilePath)
 
+	// shortener service
+	shortenerService := shortener.NewService(a.shortenerRepo, a.secure)
+
 	// http server
-	a.srv = server.New(a.store, a.secure)
-	go a.srv.Start()
+	a.httpServer = http_server.NewServer(http_api.NewImplementation(shortenerService), a.secure)
+	go a.httpServer.Run()
+
+	// grpc server
+	a.grpcServer = grpc_server.NewServer(shortenerService)
+	go a.grpcServer.Run()
 
 	// graceful shutdown
+	a.initGracefulShutdown()
+}
+
+func (a *App) initRepository() {
+	if config.DatabaseDSN != "" {
+		a.shortenerRepo = repository.NewDBPgsql()
+	} else if config.FileStoragePath != "" {
+		a.shortenerRepo = repository.NewDBFile()
+	} else {
+		a.shortenerRepo = repository.NewDBMaps()
+	}
+	a.StorageInstanceName = a.shortenerRepo.InstanceName()
+}
+
+func (a *App) initGracefulShutdown() {
 	idleConnsClosed := make(chan struct{})
 	sigint := make(chan os.Signal, 1)
 	signal.Notify(sigint, syscall.SIGINT, syscall.SIGTERM, syscall.SIGQUIT)
 	go func() {
 		sig := <-sigint
 		logger.Log.Info("The stop signal has been received", zap.String("signal", sig.String()))
-		a.srv.Stop()
+		a.httpServer.Stop()
 		close(idleConnsClosed)
 	}()
 	// blocked until the stop signal
 	<-idleConnsClosed
 	// stopping services
-	a.store.Stop()
+	a.shortenerRepo.Stop()
 	// fin.
 	logger.Log.Info("URL shortening service stopped")
 }
