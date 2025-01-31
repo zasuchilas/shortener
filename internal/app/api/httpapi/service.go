@@ -16,10 +16,12 @@ import (
 
 var _ shortenerhttpv1.ShortenerHTTPApiV1 = (*Implementation)(nil)
 
+// Implementation _
 type Implementation struct {
 	shortenerService service.ShortenerService
 }
 
+// NewImplementation _
 func NewImplementation(shortenerService service.ShortenerService) *Implementation {
 	return &Implementation{shortenerService: shortenerService}
 }
