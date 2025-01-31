@@ -42,3 +42,16 @@ godoc -http=:8083 -play
 `go run ./cmd/shortener -d "host=127.0.0.1 user=shortener password=pass dbname=shortener sslmode=disable" -l debug`
 
 `go run ./cmd/shortener -f ./storage.db -l debug`
+
+## Project Architecture
+
+- api (representation)
+  - (1) http
+  - (2) grpc
+
+- server + secure (service - business logic)
+
+- storage (repo)
+  - v1 inmemory (dbmaps)
+  - v2 files (dbfiles)
+  - v3 pgsql (dbpgsql)

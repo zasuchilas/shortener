@@ -5,10 +5,11 @@ import (
 	"crypto/aes"
 	"crypto/cipher"
 	"crypto/sha256"
-	"github.com/zasuchilas/shortener/internal/app/config"
-	"github.com/zasuchilas/shortener/internal/app/models"
 	"sync"
 	"testing"
+
+	"github.com/zasuchilas/shortener/internal/app/config"
+	"github.com/zasuchilas/shortener/internal/app/model"
 
 	"github.com/stretchr/testify/assert"
 )
@@ -111,7 +112,7 @@ func TestSecure_NewUser(t *testing.T) {
 		nonceSize           int
 		persist             bool
 		filePath            string
-		users               map[int64]*models.UserRow
+		users               map[int64]*model.UserRow
 		lastUserID          int64
 		storageInstanceName string
 		mutex               sync.RWMutex
@@ -147,7 +148,7 @@ func TestSecure_NewUser(t *testing.T) {
 				nonceSize:           aesgcm.NonceSize(),
 				persist:             false,
 				filePath:            "",
-				users:               make(map[int64]*models.UserRow),
+				users:               make(map[int64]*model.UserRow),
 				lastUserID:          0,
 				storageInstanceName: "",
 				mutex:               sync.RWMutex{},
@@ -172,7 +173,7 @@ func TestSecure_CheckUser(t *testing.T) {
 		nonceSize           int
 		persist             bool
 		filePath            string
-		users               map[int64]*models.UserRow
+		users               map[int64]*model.UserRow
 		lastUserID          int64
 		storageInstanceName string
 		mutex               sync.RWMutex
@@ -187,7 +188,7 @@ func TestSecure_CheckUser(t *testing.T) {
 	k32 := sha256.Sum256([]byte(key))
 	aesbloc, _ := aes.NewCipher(k32[:])
 	aesgcm, _ := cipher.NewGCM(aesbloc)
-	config.SecureFilePath = "./secure_test.db"
+	config.SecureFilePath = "./secure_mock.db"
 
 	tests := []struct {
 		name      string
@@ -223,7 +224,7 @@ func TestSecure_CheckUser(t *testing.T) {
 				nonceSize:           aesgcm.NonceSize(),
 				persist:             true,
 				filePath:            config.SecureFilePath,
-				users:               make(map[int64]*models.UserRow),
+				users:               make(map[int64]*model.UserRow),
 				lastUserID:          1,
 				storageInstanceName: "",
 				mutex:               sync.RWMutex{},
@@ -248,7 +249,7 @@ func TestSecure_loadFromFile(t *testing.T) {
 		nonceSize           int
 		persist             bool
 		filePath            string
-		users               map[int64]*models.UserRow
+		users               map[int64]*model.UserRow
 		lastUserID          int64
 		storageInstanceName string
 		mutex               sync.RWMutex
@@ -258,7 +259,7 @@ func TestSecure_loadFromFile(t *testing.T) {
 	k32 := sha256.Sum256([]byte(key))
 	aesbloc, _ := aes.NewCipher(k32[:])
 	aesgcm, _ := cipher.NewGCM(aesbloc)
-	config.SecureFilePath = "./secure_test.db"
+	config.SecureFilePath = "./secure_mock.db"
 
 	tests := []struct {
 		name           string
@@ -280,7 +281,7 @@ func TestSecure_loadFromFile(t *testing.T) {
 				nonceSize:           aesgcm.NonceSize(),
 				persist:             true,
 				filePath:            config.SecureFilePath,
-				users:               make(map[int64]*models.UserRow),
+				users:               make(map[int64]*model.UserRow),
 				lastUserID:          0,
 				storageInstanceName: "",
 				mutex:               sync.RWMutex{},

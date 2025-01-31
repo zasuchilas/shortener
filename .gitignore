@@ -24,6 +24,17 @@ vendor/
 
 storage*.db
 secure*.db
+!secure_mock.db
 .pginit
 .pgdata
 docker-compose.yml
+
+# tls
+cert.pem
+key.pem
+
+config*.json
+!config_mock*.json
+
+bin
+/vendor.protogen/

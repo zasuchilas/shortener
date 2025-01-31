@@ -57,6 +57,9 @@ func ServiceInfo(appVersion string) {
 		zap.String("name", moduleName),
 		zap.String("version", appVersion),
 	)
+
+	//
+	ConfigInfo()
 }
 
 // ConfigInfo logs config values.

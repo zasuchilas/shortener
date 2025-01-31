@@ -1,0 +1,11 @@
+{
+  "server_address": "localhost:33333",
+  "grpc_server_address": "localhost:33336",
+  "base_url": ":33335",
+  "file_storage_path": "./storage_example.db",
+  "database_dsn": "host=127.0.0.1 user=shortener password=password dbname=shortener sslmode=disable",
+  "enable_https": false,
+  "trusted_subnet": null,
+  "secret_key": "supersecretkey",
+  "secure_file_path": "./secure_example.db",
+  "log_level": "debug"

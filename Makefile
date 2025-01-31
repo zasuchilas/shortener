@@ -10,6 +10,12 @@ run_f:
 run_pg:
 	@go run ./cmd/shortener -d "host=127.0.0.1 user=shortener password=pass dbname=shortener sslmode=disable" -l debug
 
+run_pg_tls:
+	@go run ./cmd/shortener -d "host=127.0.0.1 user=shortener password=pass dbname=shortener sslmode=disable" -l debug -s
+
+run_pg_config:
+	@go run ./cmd/shortener -d "host=127.0.0.1 user=shortener password=pass dbname=shortener sslmode=disable" -c config.json
+
 # lint
 
 goimports:
@@ -51,3 +57,35 @@ staticlint_help:
 
 staticlint_run:
 	@./cmd/staticlint/staticlint ./...
+
+# gRPC
+
+LOCAL_BIN:=$(CURDIR)/bin
+
+install-deps:
+	GOBIN=$(LOCAL_BIN) go install google.golang.org/protobuf/cmd/protoc-gen-go@latest
+	GOBIN=$(LOCAL_BIN) go install -mod=mod google.golang.org/grpc/cmd/protoc-gen-go-grpc@latest
+
+get-deps:
+	go get -u google.golang.org/protobuf/cmd/protoc-gen-go
+	go get -u google.golang.org/grpc/cmd/protoc-gen-go-grpc
+
+vendor-proto:
+		@if [ ! -d vendor.protogen/google ]; then \
+			git clone https://github.com/googleapis/googleapis vendor.protogen/googleapis &&\
+			mkdir -p  vendor.protogen/google/ &&\
+			mv vendor.protogen/googleapis/google/api vendor.protogen/google &&\
+			rm -rf vendor.protogen/googleapis ;\
+		fi
+
+generate:
+	make generate-shortener-api
+
+generate-shortener-api:
+	mkdir -p pkg/shortenergrpcv1
+	protoc --proto_path api/shortenergrpcv1 --proto_path vendor.protogen \
+	--go_out=pkg/shortenergrpcv1 --go_opt=paths=source_relative \
+	--plugin=protoc-gen-go=bin/protoc-gen-go \
+	--go-grpc_out=pkg/shortenergrpcv1 --go-grpc_opt=paths=source_relative \
+	--plugin=protoc-gen-go-grpc=bin/protoc-gen-go-grpc \
+	api/shortenergrpcv1/shortener.proto
