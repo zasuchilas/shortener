@@ -13,6 +13,7 @@ import (
 	"github.com/zasuchilas/shortener/internal/app/utils/urlfuncs"
 )
 
+// ShortenBatch _
 func (s *service) ShortenBatch(ctx context.Context, in []model.ShortenBatchIn, userID int64) (out []model.ShortenBatchOut, err error) {
 
 	// checking request data

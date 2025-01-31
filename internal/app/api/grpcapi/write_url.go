@@ -9,6 +9,7 @@ import (
 	desc "github.com/zasuchilas/shortener/pkg/shortenergrpcv1"
 )
 
+// WriteURL _
 func (i *Implementation) WriteURL(ctx context.Context, in *desc.WriteURLRequest) (*desc.WriteURLResponse, error) {
 
 	userID := int64(1)

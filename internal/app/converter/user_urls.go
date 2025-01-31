@@ -5,6 +5,7 @@ import (
 	"github.com/zasuchilas/shortener/pkg/shortenerhttpv1"
 )
 
+// ToHTTPFromUserURL _
 func ToHTTPFromUserURL(in []model.UserURL) []shortenerhttpv1.UserURLsResponseItem {
 	result := make([]shortenerhttpv1.UserURLsResponseItem, len(in))
 	for i := range in {

@@ -6,6 +6,7 @@ import (
 	"github.com/zasuchilas/shortener/internal/app/model"
 )
 
+// ShortenerService _
 type ShortenerService interface {
 	Ping(ctx context.Context) error
 	ReadURL(ctx context.Context, shortURL string) (origURL string, err error)

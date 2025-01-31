@@ -17,12 +17,14 @@ import (
 	"github.com/zasuchilas/shortener/pkg/trusted"
 )
 
+// Server _
 type Server struct {
 	server  http.Server
 	secure  *secure.Secure
 	httpAPI shortenerhttpv1.ShortenerHTTPApiV1
 }
 
+// NewServer _
 func NewServer(httpAPI shortenerhttpv1.ShortenerHTTPApiV1, secure *secure.Secure) *Server {
 	return &Server{
 		httpAPI: httpAPI,

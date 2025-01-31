@@ -10,6 +10,7 @@ import (
 	"google.golang.org/grpc/status"
 )
 
+// DeleteUserURLs _
 func (i *Implementation) DeleteUserURLs(ctx context.Context, in *desc.DeleteUserURLsRequest) (*empty.Empty, error) {
 	userID := int64(1)
 

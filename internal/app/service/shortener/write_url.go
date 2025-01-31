@@ -5,6 +5,7 @@ import (
 	"github.com/zasuchilas/shortener/internal/app/utils/urlfuncs"
 )
 
+// WriteURL _
 func (s *service) WriteURL(ctx context.Context, rawURL string, userID int64) (readyURL string, conflict bool, err error) {
 
 	// checking request data

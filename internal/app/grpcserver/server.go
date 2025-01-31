@@ -15,11 +15,13 @@ import (
 	desc "github.com/zasuchilas/shortener/pkg/shortenergrpcv1"
 )
 
+// Server _
 type Server struct {
 	server           *grpc.Server
 	shortenerService service.ShortenerService
 }
 
+// NewServer _
 func NewServer(shortenerService service.ShortenerService) *Server {
 
 	grpcServer := grpc.NewServer(
@@ -36,6 +38,7 @@ func NewServer(shortenerService service.ShortenerService) *Server {
 	}
 }
 
+// Run _
 func (s *Server) Run() {
 	logger.Log.Info("gRPC server is running", zap.String("address", config.GRPCServerAddress))
 

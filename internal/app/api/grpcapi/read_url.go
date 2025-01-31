@@ -11,6 +11,7 @@ import (
 	desc "github.com/zasuchilas/shortener/pkg/shortenergrpcv1"
 )
 
+// ReadURL _
 func (i *Implementation) ReadURL(ctx context.Context, in *desc.ReadURLRequest) (*desc.ReadURLResponse, error) {
 
 	origURL, err := i.shortenerService.ReadURL(ctx, in.ShortUrl)

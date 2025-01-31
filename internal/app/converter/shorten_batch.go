@@ -6,6 +6,7 @@ import (
 	"github.com/zasuchilas/shortener/pkg/shortenerhttpv1"
 )
 
+// ToShortenBatchInFromHTTP _
 func ToShortenBatchInFromHTTP(in []shortenerhttpv1.ShortenBatchRequestItem) []model.ShortenBatchIn {
 	result := make([]model.ShortenBatchIn, len(in))
 	for i := range in {
@@ -17,6 +18,7 @@ func ToShortenBatchInFromHTTP(in []shortenerhttpv1.ShortenBatchRequestItem) []mo
 	return result
 }
 
+// ToHTTPFromShortenBatchOut _
 func ToHTTPFromShortenBatchOut(in []model.ShortenBatchOut) []shortenerhttpv1.ShortenBatchResponseItem {
 	result := make([]shortenerhttpv1.ShortenBatchResponseItem, len(in))
 	for i := range in {
@@ -28,6 +30,7 @@ func ToHTTPFromShortenBatchOut(in []model.ShortenBatchOut) []shortenerhttpv1.Sho
 	return result
 }
 
+// ToShortenBatchInFromGRPC _
 func ToShortenBatchInFromGRPC(in *shortenergrpcv1.ShortenBatchRequest) []model.ShortenBatchIn {
 	result := make([]model.ShortenBatchIn, len(in.Items))
 	for i := range in.Items {
@@ -39,6 +42,7 @@ func ToShortenBatchInFromGRPC(in *shortenergrpcv1.ShortenBatchRequest) []model.S
 	return result
 }
 
+// ToGRPCFromShortenBatchOut _
 func ToGRPCFromShortenBatchOut(in []model.ShortenBatchOut) *shortenergrpcv1.ShortenBatchResponse {
 	result := shortenergrpcv1.ShortenBatchResponse{}
 	for i := range in {

@@ -9,6 +9,7 @@ import (
 	"google.golang.org/grpc/status"
 )
 
+// Stats _
 func (i *Implementation) Stats(ctx context.Context, _ *empty.Empty) (*desc.StatsResponse, error) {
 
 	out, err := i.shortenerService.Stats(ctx)

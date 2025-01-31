@@ -7,6 +7,7 @@ import (
 	"google.golang.org/grpc/status"
 )
 
+// Shorten _
 func (i *Implementation) Shorten(ctx context.Context, in *desc.ShortenRequest) (*desc.ShortenResponse, error) {
 
 	userID := int64(1)

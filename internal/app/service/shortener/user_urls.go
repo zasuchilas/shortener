@@ -10,6 +10,7 @@ import (
 	"github.com/zasuchilas/shortener/internal/app/utils/urlfuncs"
 )
 
+// UserURLs _
 func (s *service) UserURLs(ctx context.Context, userID int64) (out []model.UserURL, err error) {
 
 	urlRowList, err := s.shortenerRepo.UserURLs(ctx, userID)

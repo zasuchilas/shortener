@@ -6,6 +6,7 @@ import (
 	"github.com/zasuchilas/shortener/internal/app/model"
 )
 
+// Stats _
 func (s *service) Stats(ctx context.Context) (*model.Stats, error) {
 	var (
 		out model.Stats

@@ -10,6 +10,7 @@ import (
 	"google.golang.org/grpc/status"
 )
 
+// ShortenBatch _
 func (i *Implementation) ShortenBatch(ctx context.Context, in *desc.ShortenBatchRequest) (*desc.ShortenBatchResponse, error) {
 
 	userID := int64(1)

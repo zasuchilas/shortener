@@ -11,6 +11,7 @@ import (
 	"github.com/zasuchilas/shortener/internal/app/repository"
 )
 
+// DeleteURLs _
 func (s *service) DeleteURLs(ctx context.Context, rawShortURLs []string, userID int64) error {
 
 	// clearing data

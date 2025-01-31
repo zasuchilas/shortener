@@ -6,6 +6,7 @@ import (
 	"time"
 )
 
+// Ping _
 func (s *service) Ping(ctx context.Context) error {
 	ctx, cancel := context.WithTimeout(ctx, time.Second)
 	defer cancel()

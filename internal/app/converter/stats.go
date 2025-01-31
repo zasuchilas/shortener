@@ -6,6 +6,7 @@ import (
 	"github.com/zasuchilas/shortener/pkg/shortenerhttpv1"
 )
 
+// ToHTTPFromStats _
 func ToHTTPFromStats(in model.Stats) shortenerhttpv1.StatsResponse {
 	return shortenerhttpv1.StatsResponse{
 		URLs:  in.URLs,
@@ -13,6 +14,7 @@ func ToHTTPFromStats(in model.Stats) shortenerhttpv1.StatsResponse {
 	}
 }
 
+// ToGRPCFromStats _
 func ToGRPCFromStats(in *model.Stats) *shortenergrpcv1.StatsResponse {
 	return &shortenergrpcv1.StatsResponse{
 		Urls:  int64(in.URLs),
